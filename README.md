@@ -4,14 +4,57 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 
 ## Revised Delivery Plan
 
-### Phase 0: Domain Contracts & Rule Definitions
-- Define canonical entities: `User`, `Household`, `Person`, `Goal`, `Recipe`, `MealPlan`, `ShoppingList`.
-- Define hard constraints:
-  - Mifflin-St Jeor BMR/TDEE calculation contract
-  - Weekly fat-loss cap (<= 1% bodyweight/week)
-  - Calorie floors (female >= 1200 kcal, male >= 1600 kcal)
-- Define macro allocation strategy and fallback behavior.
-- Add acceptance criteria examples for all core rule paths.
+### Phase 0: Domain Model & Rules Contract (Pre-DB)
+- Publish a canonical contract package (types + validation + examples) that must be imported by all downstream services before schema/migration work starts.
+- Define canonical entities and boundaries:
+  - `User`: account identity, auth profile, timezone/locale preferences, and membership references to one or more households.
+  - `Household`: collaboration boundary that owns members, goals, meal plans, and shopping lists.
+  - `Person`: biologically relevant nutrition subject (sex, age, height, weight, activity), scoped to one household.
+  - `Goal`: per-person target intent (maintenance, fat loss, gain) including desired rate and constraint preferences.
+  - `Recipe`: immutable nutrition snapshot, ingredients, portions, and preparation metadata used for planning.
+  - `MealPlan`: week-scoped assignment of recipes/servings to household persons with macro/calorie rollups.
+  - `ShoppingList`: normalized aggregate of required ingredients generated from a meal plan.
+- Define canonical relationships:
+  - `User` ↔ `Household`: many-to-many membership via roles (`owner`, `member`).
+  - `Household` → `Person`: one-to-many.
+  - `Person` → `Goal`: one active goal + historical goals (one-to-many over time).
+  - `MealPlan` → `Household`: many plans over time, each plan belongs to exactly one household.
+  - `MealPlan` ↔ `Recipe`: many-to-many through plan items with per-person/per-day serving allocations.
+  - `ShoppingList` → `MealPlan`: one generated list per plan version (regenerated lists are versioned).
+- Define rule contracts and required acceptance criteria:
+  - **BMR/TDEE contract (Mifflin-St Jeor + activity multipliers)**
+    - Inputs: `sex`, `ageYears`, `heightCm`, `weightKg`, `activityLevel`.
+    - Expected output: `{ bmrKcal, tdeeKcal, activityMultiplier, roundingPolicy }`.
+    - Validation errors: unsupported `sex`, non-positive anthropometrics, `ageYears < 18` (unless pediatric mode exists), unknown activity level.
+    - Acceptance criteria examples:
+      - Standard female profile returns deterministic BMR/TDEE using declared multiplier table.
+      - Standard male profile returns deterministic BMR/TDEE using declared multiplier table.
+      - Invalid input shape produces typed validation errors (no silent fallback).
+  - **Weekly fat-loss safety cap contract (<= 1% bodyweight/week)**
+    - Inputs: `currentWeightKg`, `requestedWeeklyLossKg` (or equivalent requested deficit).
+    - Expected output: `{ approvedWeeklyLossKg, maxAllowedWeeklyLossKg, appliedCap: boolean }`.
+    - Validation errors: non-positive bodyweight, negative requested loss, incompatible units.
+    - Acceptance criteria examples:
+      - Requests below cap are unchanged.
+      - Requests above cap are clamped to exactly `0.01 * currentWeightKg`.
+      - Boundary case at exactly 1% is accepted without clamp.
+  - **Sex-based calorie floor contract (female 1200, male 1600)**
+    - Inputs: `sex`, `proposedDailyCalories`.
+    - Expected output: `{ finalDailyCalories, floorCalories, floorApplied: boolean }`.
+    - Validation errors: unsupported `sex`, non-positive calorie proposal.
+    - Acceptance criteria examples:
+      - Female plan below 1200 is raised to 1200.
+      - Male plan below 1600 is raised to 1600.
+      - Values above floor remain unchanged.
+  - **Macro allocation strategy + fallback contract**
+    - Inputs: `dailyCalories`, `weightKg`, optional strategy preferences, dietary constraints.
+    - Expected output: `{ proteinG, fatG, carbG, strategyUsed, fallbackApplied, residualCalories }`.
+    - Validation errors: non-positive calories/weight, infeasible constraints (e.g., minimum protein+fat exceeds calories).
+    - Acceptance criteria examples:
+      - Primary strategy allocates protein/fat first, then assigns remaining calories to carbs.
+      - If primary strategy fails feasibility checks, fallback strategy is selected and surfaced via `fallbackApplied=true` + reason code.
+      - Outputs always satisfy calorie reconciliation tolerance and non-negative macro grams.
+- Governance requirement: downstream phases (schema, services, planner engine, and APIs) must consume these contracts directly (shared package or generated artifacts), and any rule changes must be made contract-first to prevent logic drift.
 
 ### Phase 1: Core Infrastructure
 - Create monorepo structure.
