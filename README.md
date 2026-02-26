@@ -22,13 +22,15 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 
 ### Phase 2: Data Model & Migrations
 - Implement schema for:
-  - Users, Households, People
+  - Users, Households, People, HouseholdMembers (role + ownership)
   - Goals, MacroTargets
   - Recipes, Ingredients, RecipeIngredients, RecipeNutritionSnapshots
   - MealPlans, MealPlanItems
   - ShoppingLists, ShoppingListItems
-- Add unit/category metadata for ingredient normalization.
-- Add indexes for week-based plan queries and recipe filtering.
+  - RuleExecutionRuns, RuleExecutionEvents (planning/rule artifacts)
+- Add unit/category metadata and normalization fields for ingredients.
+- Add soft-delete + timestamp fields for core entities.
+- Add explicit indexes for household plans by week and recipe filtering (cuisine/meal type).
 
 ### Phase 3: Calorie & Macro Engine
 - Implement BMR/TDEE with unit conversions and activity multipliers.
