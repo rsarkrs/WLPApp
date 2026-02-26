@@ -79,7 +79,14 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Shopping list view (grouped list + export).
 
 ### Phase 10: Production Readiness & Deployment
-- Add observability: structured logs, health checks, metrics, alerts.
+- Add structured logging with request correlation IDs propagated across API, planner jobs, and import workers.
+- Add `/health/live` and `/health/ready` endpoints with dependency checks, including PostgreSQL connectivity and migration status.
+- Add service-level metrics dashboards and alerts for:
+  - Planner latency (p50/p95/p99)
+  - Recipe import success rate
+  - Rule-validation failure counts by rule type
+- Add error monitoring and alert thresholds for critical services (API, planner, importer, database) with on-call escalation paths.
+- Define and test backup/restore runbooks plus migration rollback procedures before production cutovers.
 - Deploy backend (Render/Railway) and frontend (Vercel).
 - Configure secure environment variables and production DB.
 - Define API versioning and compatibility to support future Android clients.
