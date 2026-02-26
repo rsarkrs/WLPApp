@@ -2,7 +2,8 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Optional normalized values can use lookup tables in application code; text + checks keeps migration portable.
+-- Schema reference: db/schema.models.md (authoritative model spec).
+-- Keep migration comments concise and avoid duplicating model inventories.
 
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -227,7 +228,7 @@ CREATE TABLE rule_execution_events (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Indexes for common query paths.
+-- Query-path indexes from db/schema.models.md conventions.
 CREATE INDEX idx_meal_plans_household_week
   ON meal_plans (household_id, week_start_date)
   WHERE deleted_at IS NULL;

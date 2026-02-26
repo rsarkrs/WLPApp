@@ -1,5 +1,5 @@
--- WLPApp canonical relational schema (PostgreSQL)
--- Includes planning and rule-execution artifacts for traceability.
+-- Generated relational schema aligned to db/schema.models.md (source of truth).
+-- Keep structural changes synchronized with the canonical model doc first.
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
