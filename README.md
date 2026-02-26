@@ -157,6 +157,15 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Weekly review flow (macro visibility, swap/regenerate).
 - Shopping list view (grouped list + export).
 
+### Phase 10: Production Readiness & Deployment
+- Add structured logging with request correlation IDs propagated across API, planner jobs, and import workers.
+- Add `/health/live` and `/health/ready` endpoints with dependency checks, including PostgreSQL connectivity and migration status.
+- Add service-level metrics dashboards and alerts for:
+  - Planner latency (p50/p95/p99)
+  - Recipe import success rate
+  - Rule-validation failure counts by rule type
+- Add error monitoring and alert thresholds for critical services (API, planner, importer, database) with on-call escalation paths.
+- Define and test backup/restore runbooks plus migration rollback procedures before production cutovers.
 ### Phase 10: Dedicated QA & Release Readiness
 - Enforce pre-deployment QA gate for every release candidate.
 - Add unit tests for BMR/TDEE calculations, deficit-cap enforcement, calorie floors, and macro split logic.
