@@ -42,15 +42,23 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Implement filters: cuisine, ingredient inclusion/exclusion, meal type.
 - Add validation checks for recipe completeness and normalization.
 
-### Phase 5: Weekly Planner Engine
-- Define objective function and scoring:
-  - Macro fit
-  - Ingredient overlap
-  - Preference fit (cuisine/meal type)
-  - Prep/bulk-cook suitability
-- Implement deterministic, seed-based plan generation.
-- Separate hard vs soft constraints with fallback behavior.
-- Add debug trace output for selection decisions.
+### Phase 5A: Weekly Planner Algorithm Design
+- Define planner objective function and scoring weights:
+  - Macro target fit score
+  - Ingredient overlap score
+  - Cuisine/meal-type preference score
+  - Prep-time and bulk-cook preference score
+- Classify constraints into:
+  - Hard constraints (must pass)
+  - Soft constraints (optimize in score)
+- Specify tie-break behavior for equivalent scores.
+- Define fallback behavior when exact macro match is impossible.
+
+### Phase 5B: Weekly Planner Engine Implementation
+- Implement deterministic, seed-based plan generation for reproducible plans.
+- Implement hard-constraint filtering + soft-constraint scoring execution.
+- Implement macro-match fallback logic from the algorithm design.
+- Add planner debug output for why meals were selected or rejected.
 
 ### Phase 6: Shopping List Engine
 - Aggregate scaled ingredients across household plans.
