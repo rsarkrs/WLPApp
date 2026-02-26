@@ -67,11 +67,16 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Add import status tracking and error handling.
 - Add deduplication via canonical URL + recipe hash heuristics.
 
-### Phase 8: API, Auth, and Subscription Gates
-- Implement authentication and household-scoped authorization.
-- Define API contracts for setup, generation, swap/regenerate, shopping list.
-- Add feature gates for free vs paid capabilities.
-- Add idempotency and rate limits for heavy endpoints.
+### Phase 8: Backend API Design & Access Controls (Required Before UI)
+- Define versioned REST/GraphQL contracts for:
+  - Profile and household setup
+  - Weekly plan generation
+  - Meal swaps/regeneration
+  - Shopping list retrieval/export
+- Implement authentication and household-scoped authorization rules.
+- Add subscription feature-gate checks to enforce free vs paid capabilities.
+- Add idempotency patterns for plan generation endpoints to prevent duplicate runs.
+- Add rate limiting for URL import and planner generation endpoints.
 
 ### Phase 9: UI Implementation
 - Household setup flow (members + biological inputs + goals).
