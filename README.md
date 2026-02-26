@@ -2,25 +2,17 @@
 
 Constraint-based meal planning application focused on metabolic safety, macro adherence, household scaling, and unified shopping output.
 
+## Schema Source of Truth
+
+- The canonical schema spec is [`db/schema.models.md`](db/schema.models.md). All entity names, relationships, and naming updates must be made there first.
+- Migration SQL files should stay implementation-focused and reference the canonical schema doc instead of repeating long entity inventories.
+- `README.md` should summarize schema intent and link to the canonical doc, not duplicate full model definitions.
+
 ## Revised Delivery Plan
 
 ### Phase 0: Domain Model & Rules Contract (Pre-DB)
 - Publish a canonical contract package (types + validation + examples) that must be imported by all downstream services before schema/migration work starts.
-- Define canonical entities and boundaries:
-  - `User`: account identity, auth profile, timezone/locale preferences, and membership references to one or more households.
-  - `Household`: collaboration boundary that owns members, goals, meal plans, and shopping lists.
-  - `Person`: biologically relevant nutrition subject (sex, age, height, weight, activity), scoped to one household.
-  - `Goal`: per-person target intent (maintenance, fat loss, gain) including desired rate and constraint preferences.
-  - `Recipe`: immutable nutrition snapshot, ingredients, portions, and preparation metadata used for planning.
-  - `MealPlan`: week-scoped assignment of recipes/servings to household persons with macro/calorie rollups.
-  - `ShoppingList`: normalized aggregate of required ingredients generated from a meal plan.
-- Define canonical relationships:
-  - `User` ↔ `Household`: many-to-many membership via roles (`owner`, `member`).
-  - `Household` → `Person`: one-to-many.
-  - `Person` → `Goal`: one active goal + historical goals (one-to-many over time).
-  - `MealPlan` → `Household`: many plans over time, each plan belongs to exactly one household.
-  - `MealPlan` ↔ `Recipe`: many-to-many through plan items with per-person/per-day serving allocations.
-  - `ShoppingList` → `MealPlan`: one generated list per plan version (regenerated lists are versioned).
+- Define canonical entities/relationships via the schema source-of-truth: [`db/schema.models.md`](db/schema.models.md).
 - Define rule contracts and required acceptance criteria:
   - **BMR/TDEE contract (Mifflin-St Jeor + activity multipliers)**
     - Inputs: `sex`, `ageYears`, `heightCm`, `weightKg`, `activityLevel`.
@@ -75,13 +67,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
   - Local developer environment can start web, API, and database services using documented commands.
 
 ### Phase 2: Data Model & Migrations
-- Implement schema for:
-  - Users, Households, HouseholdMembers, People
-  - Goals, MacroTargets
-  - Recipes, Ingredients, RecipeIngredients, RecipeNutritionSnapshots
-  - MealPlans, MealPlanItems
-  - ShoppingLists, ShoppingListItems
-  - PlanningRuns, RuleExecutionArtifacts (rule-evaluation and fallback traces)
+- Implement schema described in [`db/schema.models.md`](db/schema.models.md), including planning/rule-execution artifacts.
 - Add unit/category metadata and normalization fields for ingredients.
 - Add household/member linking with role and ownership metadata.
 - Add soft-delete and created/updated timestamps for core entities.
@@ -93,7 +79,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - **Mandatory checks:** Migration up/down tests pass; schema lint/format checks pass; integration tests validate critical relations and constraints.
 - **Ownership:** Data/Backend area (`apps/api` persistence layer and migration package).
 - **Exit criteria (verifiable):**
-  - All listed entities and relationships exist in migration history and can be applied to a fresh database.
+  - All entities/relationships from [`db/schema.models.md`](db/schema.models.md) exist in migration history and can be applied to a fresh database.
   - Required indexes, timestamps, and soft-delete fields are present and validated by tests.
   - Rollback and re-apply of latest migration set succeeds without data-model drift.
 

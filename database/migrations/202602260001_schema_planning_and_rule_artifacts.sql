@@ -1,4 +1,5 @@
--- Adds planning domain entities, household linking metadata, and rule-execution artifacts.
+-- Schema reference: db/schema.models.md (authoritative model spec).
+-- Migration adds planning/rule-execution artifacts; keep comments concise and implementation-focused.
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
