@@ -59,13 +59,15 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Add optional warehouse/bulk optimization mode.
 
 ### Phase 7: URL Recipe Import
-- Build ingestion pipeline:
+- Build full ingestion pipeline stages:
   - Fetch URL
   - Parse schema.org data
-  - Parse ingredients + normalize units
-  - Extract or estimate nutrition when missing
-- Add import status tracking and error handling.
-- Add deduplication via canonical URL + recipe hash heuristics.
+  - Normalize ingredient quantities/units
+  - Map nutrition (structured data first, heuristic estimate fallback)
+- Add deduplication via canonical URL + normalized recipe-name/content-hash heuristics.
+- Enforce validation rules for required recipe fields and ingredient unit parsing.
+- Add fallback extraction when schema.org payloads are missing or malformed.
+- Persist source attribution and import status/error tracking fields for observability.
 
 ### Phase 8: API, Auth, and Subscription Gates
 - Implement authentication and household-scoped authorization.
