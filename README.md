@@ -134,7 +134,25 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Add idempotency patterns for plan generation endpoints to prevent duplicate runs.
 - Add rate limiting for URL import and planner generation endpoints.
 
-### Phase 9: UI Implementation
+### Phase 9: Cross-Platform Readiness
+- Define API versioning strategy (`/v1`) and backward compatibility policy:
+  - Add deprecation windows and sunset headers for breaking changes.
+  - Require additive-first schema evolution and contract test coverage for mobile-safe endpoints.
+- Ensure clear frontend/business-logic separation:
+  - Keep planning/business rules in backend services shared by web and mobile clients.
+  - Restrict Next.js app to presentation/orchestration concerns that consume backend contracts.
+- Add offline-friendly endpoints/data shapes for mobile sync:
+  - Weekly plans endpoint with stable IDs, revision metadata, and delta-friendly timestamps.
+  - Shopping list endpoint with normalization snapshots and conflict-safe item states.
+- Add mobile-compatible auth/session strategy:
+  - Short-lived access tokens + rotating refresh tokens.
+  - Device-scoped session management and revocation support.
+- Create follow-up implementation task block for native clients:
+  - React Native bootstrap path (shared JS/TS model layer).
+  - Kotlin Android bootstrap path (native client + generated API bindings).
+  - Decision checkpoint documenting chosen client strategy and rollout criteria.
+
+### Phase 10: UI Implementation
 - Household setup flow (members + biological inputs + goals).
 - Weekly review flow (macro visibility, swap/regenerate).
 - Shopping list view (grouped list + export).
@@ -152,7 +170,6 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Require the dedicated QA phase to pass in CI before deploy jobs can run.
 - Deploy backend (Render/Railway) and frontend (Vercel).
 - Configure secure environment variables and production DB.
-- Define API versioning and compatibility to support future Android clients.
 
 ## Testing Strategy (Cross-Phase)
 - Unit tests for rule engine and nutrition/macro calculations, including BMR/TDEE, deficit caps, calorie floors, and macro split logic.
