@@ -7,6 +7,33 @@ The QA phase is mandatory for release branches and pull requests targeting `main
 
 ## Test Layers
 
+### Current Source Path Mapping (for CI policy wiring)
+
+| QA gate / layer | Current concrete path(s) | Status | Notes for CI implementation |
+| --- | --- | --- | --- |
+| Unit tests (metabolic + macro engine) | `tests/qa/metabolic-engine.test.js` | Implemented | Use as the current unit gate target until engine modules are split into dedicated packages. |
+| Property + edge tests | `tests/qa/metabolic-engine.test.js` (edge/boundary fixture coverage) | Partially implemented | Dedicated property/fuzz suite is **not yet implemented**; add explicit property tests under `tests/qa/property/` during monorepo split. |
+| Integration tests | `tests/qa/planning-shopping.integration.test.js` | Implemented | Current integration gate path. |
+| API contract tests | `tests/qa/api-contract.test.js`, `tests/qa/support/metabolic-contract.js`, `tests/fixtures/metabolic-contract-fixtures.json` | Implemented | Treat fixtures + shared contract helper as part of contract gate inputs. |
+| Coverage gate paths | Planned: `core/metabolic/**`, `core/planning/**`, `core/shopping/**` | **Not yet implemented** | These module paths do not exist yet in this repo layout; keep as planned targets for monorepo transition. |
+
+### Layer-to-Test File Coverage
+
+| Layer | Test file(s) currently satisfying layer |
+| --- | --- |
+| Unit | `tests/qa/metabolic-engine.test.js` |
+| Property / edge | `tests/qa/metabolic-engine.test.js` (fixture-driven boundary/error examples); dedicated property test file(s) **not yet implemented** |
+| Integration | `tests/qa/planning-shopping.integration.test.js` |
+| Contract | `tests/qa/api-contract.test.js`, `tests/qa/support/metabolic-contract.js`, `tests/fixtures/metabolic-contract-fixtures.json` |
+
+### Monorepo Transition Note (Path Renames Expected)
+
+During monorepo setup, test and coverage paths are expected to move from the current flat layout (`tests/qa/**`) into package-scoped locations (for example, `packages/core-metabolic/tests/**`, `packages/core-planning/tests/**`, and `packages/core-shopping/tests/**`). CI policy should therefore:
+
+1. Use the concrete paths in this document today.
+2. Treat `core/metabolic/**`, `core/planning/**`, and `core/shopping/**` as planned coverage targets.
+3. Update gate path globs in the same PR that introduces package path moves to avoid silent gate bypass.
+
 ### 1) Unit Tests (Metabolic & Macro Engine)
 Add and maintain unit tests for:
 - BMR/TDEE calculations (Mifflin-St Jeor + activity multipliers)
