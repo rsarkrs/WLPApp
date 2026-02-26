@@ -55,6 +55,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
       - If primary strategy fails feasibility checks, fallback strategy is selected and surfaced via `fallbackApplied=true` + reason code.
       - Outputs always satisfy calorie reconciliation tolerance and non-negative macro grams.
 - Governance requirement: downstream phases (schema, services, planner engine, and APIs) must consume these contracts directly (shared package or generated artifacts), and any rule changes must be made contract-first to prevent logic drift.
+- Contract fixture set for deterministic examples and edge/error cases: `tests/fixtures/metabolic-contract-fixtures.json` (consumed by QA tests to prevent duplicate assumptions).
 
 ### Phase 1: Core Infrastructure
 - Create monorepo structure.

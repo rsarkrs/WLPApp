@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { fixtures } = require('./support/metabolic-contract');
 
 function assertPlanResponseContract(response) {
   assert.equal(typeof response.weekStart, 'string');
@@ -44,16 +45,18 @@ test('contract: shopping list API payload shape', () => {
   assertShoppingResponseContract(response);
 });
 
-test('contract: error response shape is stable', () => {
-  const errorResponse = {
-    error: {
-      code: 'VALIDATION_ERROR',
-      message: 'Invalid request payload',
-      details: [{ field: 'goal.rate', reason: 'out_of_range' }],
-    },
-  };
+test('contract: error response shape is stable and code/message align with shared fixtures', () => {
+  for (const example of fixtures.errorExamples) {
+    const errorResponse = {
+      error: {
+        code: example.expectedError.code,
+        message: example.expectedError.message,
+        details: [{ fixtureId: example.id, context: example.context }],
+      },
+    };
 
-  assert.equal(typeof errorResponse.error.code, 'string');
-  assert.equal(typeof errorResponse.error.message, 'string');
-  assert.ok(Array.isArray(errorResponse.error.details));
+    assert.equal(typeof errorResponse.error.code, 'string');
+    assert.equal(typeof errorResponse.error.message, 'string');
+    assert.ok(Array.isArray(errorResponse.error.details));
+  }
 });

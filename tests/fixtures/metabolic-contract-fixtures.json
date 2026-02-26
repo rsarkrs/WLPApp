@@ -1,0 +1,233 @@
+{
+  "meta": {
+    "contractVersion": "2026-02-26",
+    "roundingPolicy": {
+      "id": "nearest_integer_half_up",
+      "description": "Numeric outputs exposed by the contract are rounded with Math.round(value)."
+    },
+    "activityMultipliers": {
+      "sedentary": 1.2,
+      "light": 1.375,
+      "moderate": 1.55,
+      "very": 1.725
+    }
+  },
+  "bmrTdeeExamples": [
+    {
+      "id": "male_moderate_exact_integer_bmr",
+      "input": {
+        "sex": "male",
+        "ageYears": 30,
+        "heightCm": 180,
+        "weightKg": 80,
+        "activityLevel": "moderate"
+      },
+      "expected": {
+        "bmrKcal": 1780,
+        "tdeeKcal": 2759,
+        "activityMultiplier": 1.55,
+        "roundingPolicy": "nearest_integer_half_up"
+      }
+    },
+    {
+      "id": "female_moderate_fractional_rounding",
+      "input": {
+        "sex": "female",
+        "ageYears": 29,
+        "heightCm": 170,
+        "weightKg": 65,
+        "activityLevel": "moderate"
+      },
+      "expected": {
+        "bmrKcal": 1407,
+        "tdeeKcal": 2180,
+        "activityMultiplier": 1.55,
+        "roundingPolicy": "nearest_integer_half_up"
+      }
+    }
+  ],
+  "weeklyCapExamples": [
+    {
+      "id": "request_below_cap_no_clamp",
+      "input": {
+        "currentWeightKg": 70,
+        "requestedWeeklyLossKg": 0.3
+      },
+      "expected": {
+        "approvedWeeklyLossKg": 0.3,
+        "maxAllowedWeeklyLossKg": 0.7,
+        "appliedCap": false
+      }
+    },
+    {
+      "id": "request_above_cap_clamped",
+      "input": {
+        "currentWeightKg": 70,
+        "requestedWeeklyLossKg": 0.9
+      },
+      "expected": {
+        "approvedWeeklyLossKg": 0.7,
+        "maxAllowedWeeklyLossKg": 0.7,
+        "appliedCap": true
+      }
+    },
+    {
+      "id": "request_exact_cap_boundary",
+      "input": {
+        "currentWeightKg": 70,
+        "requestedWeeklyLossKg": 0.7
+      },
+      "expected": {
+        "approvedWeeklyLossKg": 0.7,
+        "maxAllowedWeeklyLossKg": 0.7,
+        "appliedCap": false
+      }
+    }
+  ],
+  "calorieFloorExamples": [
+    {
+      "id": "female_below_floor",
+      "input": {
+        "sex": "female",
+        "proposedDailyCalories": 950
+      },
+      "expected": {
+        "finalDailyCalories": 1200,
+        "floorCalories": 1200,
+        "floorApplied": true
+      }
+    },
+    {
+      "id": "male_floor_boundary",
+      "input": {
+        "sex": "male",
+        "proposedDailyCalories": 1600
+      },
+      "expected": {
+        "finalDailyCalories": 1600,
+        "floorCalories": 1600,
+        "floorApplied": false
+      }
+    }
+  ],
+  "macroAllocationExamples": [
+    {
+      "id": "primary_strategy_success",
+      "input": {
+        "dailyCalories": 2100,
+        "weightKg": 70,
+        "strategy": "protein2gkg_fat0.8gkg_then_carbs"
+      },
+      "expected": {
+        "proteinG": 140,
+        "fatG": 56,
+        "carbG": 259,
+        "strategyUsed": "protein2gkg_fat0.8gkg_then_carbs",
+        "fallbackApplied": false,
+        "fallbackReasonCode": null,
+        "residualCalories": 0
+      }
+    },
+    {
+      "id": "fallback_when_primary_infeasible",
+      "input": {
+        "dailyCalories": 900,
+        "weightKg": 90,
+        "strategy": "protein2gkg_fat0.8gkg_then_carbs"
+      },
+      "expected": {
+        "proteinG": 68,
+        "fatG": 30,
+        "carbG": 90,
+        "strategyUsed": "balanced_30_30_40_fallback",
+        "fallbackApplied": true,
+        "fallbackReasonCode": "ERR_INFEASIBLE_MACRO_CONSTRAINTS",
+        "residualCalories": -2
+      }
+    }
+  ],
+  "errorExamples": [
+    {
+      "id": "unsupported_sex",
+      "context": "bmr_tdee",
+      "input": {
+        "sex": "other",
+        "ageYears": 30,
+        "heightCm": 180,
+        "weightKg": 75,
+        "activityLevel": "moderate"
+      },
+      "expectedError": {
+        "code": "ERR_UNSUPPORTED_SEX",
+        "message": "Unsupported sex value. Expected \"female\" or \"male\"."
+      }
+    },
+    {
+      "id": "invalid_age",
+      "context": "bmr_tdee",
+      "input": {
+        "sex": "female",
+        "ageYears": 17,
+        "heightCm": 165,
+        "weightKg": 60,
+        "activityLevel": "light"
+      },
+      "expectedError": {
+        "code": "ERR_INVALID_AGE",
+        "message": "ageYears must be >= 18."
+      }
+    },
+    {
+      "id": "unknown_activity_level",
+      "context": "bmr_tdee",
+      "input": {
+        "sex": "male",
+        "ageYears": 34,
+        "heightCm": 176,
+        "weightKg": 82,
+        "activityLevel": "ultra"
+      },
+      "expectedError": {
+        "code": "ERR_UNKNOWN_ACTIVITY_LEVEL",
+        "message": "Unknown activityLevel. Expected one of: sedentary, light, moderate, very."
+      }
+    },
+    {
+      "id": "invalid_weekly_loss",
+      "context": "weekly_cap",
+      "input": {
+        "currentWeightKg": 70,
+        "requestedWeeklyLossKg": -0.1
+      },
+      "expectedError": {
+        "code": "ERR_NEGATIVE_REQUESTED_LOSS",
+        "message": "requestedWeeklyLossKg must be >= 0."
+      }
+    },
+    {
+      "id": "non_positive_calories",
+      "context": "calorie_floor",
+      "input": {
+        "sex": "female",
+        "proposedDailyCalories": 0
+      },
+      "expectedError": {
+        "code": "ERR_NON_POSITIVE_CALORIES",
+        "message": "proposedDailyCalories must be > 0."
+      }
+    },
+    {
+      "id": "macro_input_invalid",
+      "context": "macro_allocation",
+      "input": {
+        "dailyCalories": -100,
+        "weightKg": 70,
+        "strategy": "protein2gkg_fat0.8gkg_then_carbs"
+      },
+      "expectedError": {
+        "code": "ERR_NON_POSITIVE_DAILY_CALORIES",
+        "message": "dailyCalories must be > 0."
+      }
+    }
+  ]
+}
