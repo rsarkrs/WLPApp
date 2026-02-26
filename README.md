@@ -63,6 +63,16 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Configure PostgreSQL and local dev environment.
 - Add CI pipeline scaffold (lint, test, build).
 
+
+**Definition of Done (Template)**
+- **Required deliverables:** Monorepo workspace configuration, Next.js app scaffold, Express API scaffold, local PostgreSQL setup docs/scripts, CI workflow files.
+- **Mandatory checks:** Lint and typecheck pass for all packages; baseline unit test suite passes; CI build jobs pass on pull requests.
+- **Ownership:** Platform/Infrastructure area (`packages/config`, `apps/web`, `apps/api`, CI workflows).
+- **Exit criteria (verifiable):**
+  - Repository contains runnable `apps/web` and `apps/api` packages with documented startup commands.
+  - CI executes lint, test, and build jobs successfully on a clean checkout.
+  - Local developer environment can start web, API, and database services using documented commands.
+
 ### Phase 2: Data Model & Migrations
 - Implement schema for:
   - Users, Households, HouseholdMembers, People
@@ -76,6 +86,16 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Add soft-delete and created/updated timestamps for core entities.
 - Add explicit indexes for household week-based plan queries and recipe filtering by cuisine/meal type.
 
+
+**Definition of Done (Template)**
+- **Required deliverables:** Versioned migration files, ORM/entity schema definitions, ERD/API data model notes, seed fixtures for core entities.
+- **Mandatory checks:** Migration up/down tests pass; schema lint/format checks pass; integration tests validate critical relations and constraints.
+- **Ownership:** Data/Backend area (`apps/api` persistence layer and migration package).
+- **Exit criteria (verifiable):**
+  - All listed entities and relationships exist in migration history and can be applied to a fresh database.
+  - Required indexes, timestamps, and soft-delete fields are present and validated by tests.
+  - Rollback and re-apply of latest migration set succeeds without data-model drift.
+
 ### Phase 3: Calorie & Macro Engine
 - Implement BMR/TDEE with unit conversions and activity multipliers.
 - Implement deficit logic with daily conversion and 1% weekly cap.
@@ -83,10 +103,30 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Implement macro calculation (protein/fat/carb strategy).
 - Add unit + edge-case tests for all constraint logic.
 
+
+**Definition of Done (Template)**
+- **Required deliverables:** Rule-engine modules for BMR/TDEE, deficit cap, calorie floors, macro allocation, and typed contract interfaces.
+- **Mandatory checks:** Lint/typecheck pass; unit and edge-case tests pass; core engine coverage >= 90% line and >= 85% branch.
+- **Ownership:** Nutrition Engine area (`packages/domain-rules` and API integration adapters).
+- **Exit criteria (verifiable):**
+  - Contract test vectors for each rule return deterministic outputs.
+  - Safety constraints (1% weekly cap and calorie floors) are enforced in all tested scenarios.
+  - Coverage report meets thresholds for core engine modules in CI.
+
 ### Phase 4: Recipe Catalog & Filtering
 - Seed initial structured recipe set with cuisine/meal-type/macro metadata.
 - Implement filters: cuisine, ingredient inclusion/exclusion, meal type.
 - Add validation checks for recipe completeness and normalization.
+
+
+**Definition of Done (Template)**
+- **Required deliverables:** Structured recipe seed dataset, recipe/ingredient metadata schema, filtering service/API endpoints, normalization validators.
+- **Mandatory checks:** Lint/typecheck pass; catalog import/seed tests pass; filter integration tests pass; data quality checks report no blocking validation errors.
+- **Ownership:** Catalog area (`apps/api` recipe modules and seed data package).
+- **Exit criteria (verifiable):**
+  - Recipe records include cuisine, meal-type, and macro metadata required by planner queries.
+  - Filter endpoints return correct include/exclude behavior for defined test fixtures.
+  - Ingredient units and quantities pass normalization validation for all seeded recipes.
 
 ### Phase 5A: Weekly Planner Algorithm Design
 - Define planner objective function and scoring weights:
@@ -100,17 +140,47 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Specify tie-break behavior for equivalent scores.
 - Define fallback behavior when exact macro match is impossible.
 
+
+**Definition of Done (Template)**
+- **Required deliverables:** Planner design spec (objective function, constraint taxonomy, tie-breaks), scoring weight table, fallback decision matrix.
+- **Mandatory checks:** Design review checklist approved; spec lint/docs checks pass; traceability matrix links requirements to planned tests.
+- **Ownership:** Planning Algorithm area (`docs/planner` and domain-rules maintainers).
+- **Exit criteria (verifiable):**
+  - Spec defines hard vs soft constraints with machine-testable rule statements.
+  - Tie-break and fallback behavior is fully specified with deterministic examples.
+  - Approved design artifact is referenced by implementation tasks and test plan IDs.
+
 ### Phase 5B: Weekly Planner Engine Implementation
 - Implement deterministic, seed-based plan generation for reproducible plans.
 - Implement hard-constraint filtering + soft-constraint scoring execution.
 - Implement macro-match fallback logic from the algorithm design.
 - Add planner debug output for why meals were selected or rejected.
 
+
+**Definition of Done (Template)**
+- **Required deliverables:** Planner engine implementation, deterministic seeded execution path, scoring/fallback modules, debug/trace artifacts.
+- **Mandatory checks:** Lint/typecheck pass; planner unit/integration tests pass; reproducibility test confirms identical output for same seed/input; planner coverage >= 85% line.
+- **Ownership:** Planning Engine area (`apps/api` planner services + shared scoring package).
+- **Exit criteria (verifiable):**
+  - Re-running planner with same inputs and seed produces byte-equivalent plan output.
+  - Hard constraints are never violated in integration test fixtures.
+  - Debug traces expose accepted/rejected candidate reasons for each generated plan.
+
 ### Phase 6: Shopping List Engine
 - Aggregate scaled ingredients across household plans.
 - Normalize units and consolidate duplicates.
 - Group by category (produce/meat/dairy/pantry/spices).
 - Add optional warehouse/bulk optimization mode.
+
+
+**Definition of Done (Template)**
+- **Required deliverables:** Shopping aggregation engine, unit normalization/consolidation module, category grouping logic, bulk-mode optimizer toggles.
+- **Mandatory checks:** Lint/typecheck pass; aggregation unit tests pass; end-to-end planner-to-shopping integration tests pass; normalization accuracy checks >= 99% on fixture set.
+- **Ownership:** Shopping area (`apps/api` shopping modules and shared unit-conversion utilities).
+- **Exit criteria (verifiable):**
+  - Duplicate ingredients are consolidated with normalized units in generated lists.
+  - Category grouping matches configured taxonomy for all test fixtures.
+  - Optional bulk optimization mode can be enabled/disabled and verified through tests.
 
 ### Phase 7: URL Recipe Import
 - Build full ingestion pipeline stages:
@@ -122,6 +192,16 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Enforce validation rules for required recipe fields and ingredient unit parsing.
 - Add fallback extraction when schema.org payloads are missing or malformed.
 - Persist source attribution and import status/error tracking fields for observability.
+
+
+**Definition of Done (Template)**
+- **Required deliverables:** URL ingestion pipeline stages, schema.org parser, normalization/mapping modules, deduplication logic, import status/error persistence schema.
+- **Mandatory checks:** Lint/typecheck pass; importer unit and integration tests pass; malformed URL/payload validation tests pass; import fixture suite >= 95% parse completeness.
+- **Ownership:** Importer area (`apps/api` import worker/services and persistence adapters).
+- **Exit criteria (verifiable):**
+  - Imports persist canonical source attribution, dedupe keys, and terminal status for every run.
+  - Fallback extraction path is triggered and validated when structured data is absent.
+  - Validation rejects malformed payloads with typed, observable error reasons.
 
 ### Phase 8: Backend API Design & Access Controls (Required Before UI)
 - Define versioned REST/GraphQL contracts for:
