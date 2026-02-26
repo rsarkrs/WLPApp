@@ -78,17 +78,27 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Weekly review flow (macro visibility, swap/regenerate).
 - Shopping list view (grouped list + export).
 
-### Phase 10: Production Readiness & Deployment
+### Phase 10: Dedicated QA & Release Readiness
+- Enforce pre-deployment QA gate for every release candidate.
+- Add unit tests for BMR/TDEE calculations, deficit-cap enforcement, calorie floors, and macro split logic.
+- Add property and edge-case tests for extreme physiological input ranges and aggressive goals.
+- Add integration tests for weekly plan generation and shopping-list aggregation behavior.
+- Add API contract tests validating frontend/backend request-response compatibility.
+- Enforce CI coverage thresholds for core engine modules before deployment.
+
+### Phase 11: Production Readiness & Deployment
 - Add observability: structured logs, health checks, metrics, alerts.
+- Require the dedicated QA phase to pass in CI before deploy jobs can run.
 - Deploy backend (Render/Railway) and frontend (Vercel).
 - Configure secure environment variables and production DB.
 - Define API versioning and compatibility to support future Android clients.
 
 ## Testing Strategy (Cross-Phase)
-- Unit tests for rule engine and nutrition/macro calculations.
-- Integration tests for plan generation and shopping aggregation.
+- Unit tests for rule engine and nutrition/macro calculations, including BMR/TDEE, deficit caps, calorie floors, and macro split logic.
+- Property and edge-case tests for very low/high weight, age boundary values, and aggressive goal scenarios.
+- Integration tests for weekly plan generation and shopping aggregation.
 - Contract tests for frontend/backend APIs.
-- Coverage gate for core metabolic/planning modules.
+- Coverage gate for core metabolic/planning modules enforced by CI.
 
 ## Repository Workflow Rules
 - Follow the required branch/PR naming convention in `CONTRIBUTING.md`.
