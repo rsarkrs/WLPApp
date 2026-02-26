@@ -67,7 +67,8 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
   - Local developer environment can start web, API, and database services using documented commands.
 
 ### Phase 2: Data Model & Migrations
-- Implement schema described in [`db/schema.models.md`](db/schema.models.md), including planning/rule-execution artifacts.
+- Implement schema described in [`db/schema.models.md`](db/schema.models.md), including canonical `planning_runs` (business-level run records) and `rule_execution_artifacts` (rule-engine-level events).
+- Preserve terminology split in future migrations: business lifecycle changes map to `planning_runs`; rule trace/detail evolution maps to `rule_execution_artifacts`.
 - Add unit/category metadata and normalization fields for ingredients.
 - Add household/member linking with role and ownership metadata.
 - Add soft-delete and created/updated timestamps for core entities.
