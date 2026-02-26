@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BASE_BRANCH="${BASE_BRANCH:-main}"
+HEAD_BRANCH="${HEAD_BRANCH:-$(git branch --show-current)}"
+TITLE="${PR_TITLE:-}"
+BODY_FILE="${PR_BODY_FILE:-}"
+REPO="${GITHUB_REPOSITORY:-rsarkrs/WLPApp}"
+
+if [[ -z "$HEAD_BRANCH" ]]; then
+  echo "Could not determine current branch" >&2
+  exit 1
+fi
+
+if [[ "$HEAD_BRANCH" == "$BASE_BRANCH" ]]; then
+  echo "Do not create PR from base branch ($BASE_BRANCH)." >&2
+  exit 1
+fi
+
+if [[ -z "$TITLE" ]]; then
+  TITLE="Chore/${HEAD_BRANCH//\//-}"
+fi
+
+if [[ ! "$TITLE" =~ ^(Fix|Feat|Chore|Docs|Refactor|Test|Perf)/.+$ ]]; then
+  echo "PR title must start with Fix|Feat|Chore|Docs|Refactor|Test|Perf/" >&2
+  exit 1
+fi
+
+if [[ ! "$HEAD_BRANCH" =~ ^(Fix|Feat|Chore|Docs|Refactor|Test|Perf)/.+$ ]]; then
+  cat <<MSG >&2
+Current branch '$HEAD_BRANCH' does not follow naming convention.
+Rename it first, e.g.:
+  git branch -m Chore/<short-description>
+MSG
+  exit 1
+fi
+
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "Working tree is dirty. Commit or stash changes before creating PR." >&2
+  exit 1
+fi
+
+git push -u origin "$HEAD_BRANCH"
+
+if command -v gh >/dev/null 2>&1; then
+  if [[ -n "$BODY_FILE" ]]; then
+    gh pr create --base "$BASE_BRANCH" --head "$HEAD_BRANCH" --title "$TITLE" --body-file "$BODY_FILE"
+  else
+    gh pr create --base "$BASE_BRANCH" --head "$HEAD_BRANCH" --title "$TITLE" --fill
+  fi
+  exit 0
+fi
+
+TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
+if [[ -z "$TOKEN" ]]; then
+  echo "gh is not installed and no GITHUB_TOKEN/GH_TOKEN is set for API fallback." >&2
+  exit 1
+fi
+
+BODY="Automated PR created by scripts/create_pr.sh"
+if [[ -n "$BODY_FILE" ]]; then
+  BODY="$(cat "$BODY_FILE")"
+fi
+
+JSON_PAYLOAD=$(python3 - <<PY
+import json
+print(json.dumps({
+  "title": "$TITLE",
+  "head": "$HEAD_BRANCH",
+  "base": "$BASE_BRANCH",
+  "body": """$BODY"""
+}))
+PY
+)
+
+curl -sS -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Accept: application/vnd.github+json" \
+  "https://api.github.com/repos/$REPO/pulls" \
+  -d "$JSON_PAYLOAD"

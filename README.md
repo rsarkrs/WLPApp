@@ -94,3 +94,4 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Follow the required branch/PR naming convention in `CONTRIBUTING.md`.
 - Merge to `main` through Pull Requests only (no direct pushes).
 - GitHub enforcement details live in `.github/workflows/pr-policy.yml` and `.github/BRANCH_PROTECTION.md`.
+- Automation scripts for auth/PR creation live in `scripts/bootstrap_github_auth.sh` and `scripts/create_pr.sh`.

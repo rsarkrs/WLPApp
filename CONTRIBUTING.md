@@ -34,3 +34,8 @@ Examples:
 ## GitHub Enforcement
 - CI workflow `.github/workflows/pr-policy.yml` validates PR title and source branch prefixes.
 - Configure GitHub branch protection for `main` as documented in `.github/BRANCH_PROTECTION.md`.
+
+## Automation Helpers
+- `scripts/bootstrap_github_auth.sh`: configures `origin` and validates GitHub auth using `gh` or `curl` + token fallback.
+- `scripts/create_pr.sh`: validates naming policy, pushes branch, and creates a PR via `gh` or GitHub API fallback.
+- Required env for API fallback: `GITHUB_TOKEN` (or `GH_TOKEN`).
