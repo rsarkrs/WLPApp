@@ -33,10 +33,10 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Add recipe normalization and completeness validators.
 
 ## Phase 5A — Weekly Planner Algorithm Design
-- [ ] Define planner objective function and scoring weights.
-- [ ] Define hard vs soft constraint taxonomy.
-- [ ] Define tie-break and macro-fallback behavior.
-- [ ] Publish design artifact with traceability to test cases.
+- [x] Define planner objective function and scoring weights.
+- [x] Define hard vs soft constraint taxonomy.
+- [x] Define tie-break and macro-fallback behavior.
+- [x] Publish design artifact with traceability to test cases.
 
 ## Phase 5B — Weekly Planner Engine Implementation
 - [ ] Implement deterministic seed-based planner engine.
