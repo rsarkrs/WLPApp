@@ -12,7 +12,7 @@ The QA phase is mandatory for release branches and pull requests targeting `main
 | QA gate / layer | Current concrete path(s) | Status | Notes for CI implementation |
 | --- | --- | --- | --- |
 | Unit tests (metabolic + macro engine) | `tests/qa/metabolic-engine.test.js` | Implemented | Use as the current unit gate target until engine modules are split into dedicated packages. |
-| Property + edge tests | `tests/qa/metabolic-engine.test.js` (edge/boundary fixture coverage) | Partially implemented | Dedicated property/fuzz suite is **not yet implemented**; add explicit property tests under `tests/qa/property/` during monorepo split. |
+| Property + edge tests | `tests/qa/metabolic-engine.property.test.js`, `tests/qa/metabolic-engine.test.js` | Implemented | Current property coverage exists in a dedicated property test file; consider adding fuzz/stochastic extensions in monorepo split. |
 | Integration tests | `tests/qa/planning-shopping.integration.test.js` | Implemented | Current integration gate path. |
 | API contract tests | `tests/qa/api-contract.test.js`, `tests/qa/support/metabolic-contract.js`, `tests/fixtures/metabolic-contract-fixtures.json` | Implemented | Treat fixtures + shared contract helper as part of contract gate inputs. |
 | Coverage gate paths | Planned: `core/metabolic/**`, `core/planning/**`, `core/shopping/**` | **Not yet implemented** | These module paths do not exist yet in this repo layout; keep as planned targets for monorepo transition. |
@@ -22,7 +22,7 @@ The QA phase is mandatory for release branches and pull requests targeting `main
 | Layer | Test file(s) currently satisfying layer |
 | --- | --- |
 | Unit | `tests/qa/metabolic-engine.test.js` |
-| Property / edge | `tests/qa/metabolic-engine.test.js` (fixture-driven boundary/error examples); dedicated property test file(s) **not yet implemented** |
+| Property / edge | `tests/qa/metabolic-engine.property.test.js`, `tests/qa/metabolic-engine.test.js` |
 | Integration | `tests/qa/planning-shopping.integration.test.js` |
 | Contract | `tests/qa/api-contract.test.js`, `tests/qa/support/metabolic-contract.js`, `tests/fixtures/metabolic-contract-fixtures.json` |
 

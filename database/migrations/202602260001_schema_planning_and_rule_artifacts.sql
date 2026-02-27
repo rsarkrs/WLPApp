@@ -150,3 +150,23 @@ CREATE TABLE IF NOT EXISTS rule_execution_artifacts (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at TIMESTAMPTZ
 );
+
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'shopping_lists_household_week_unique'
+  ) THEN
+    ALTER TABLE shopping_lists
+      ADD CONSTRAINT shopping_lists_household_week_unique
+      UNIQUE (household_id, week_start_date);
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_recipes_cuisine_meal_type
+  ON recipes (cuisine, meal_type);
+
+CREATE INDEX IF NOT EXISTS idx_shopping_lists_household_week
+  ON shopping_lists (household_id, week_start_date);
