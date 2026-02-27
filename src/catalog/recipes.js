@@ -5,7 +5,12 @@ const seedRecipes = [
     cuisine: 'american',
     mealType: 'breakfast',
     macros: { proteinG: 28, fatG: 11, carbG: 52 },
-    ingredients: ['oats', 'milk', 'chia seeds', 'berries']
+    ingredients: [
+      { name: 'oats', qty: 80, unit: 'g' },
+      { name: 'milk', qty: 250, unit: 'ml' },
+      { name: 'chia seeds', qty: 15, unit: 'g' },
+      { name: 'berries', qty: 100, unit: 'g' },
+    ]
   },
   {
     id: 'r-greek-chicken',
@@ -13,7 +18,13 @@ const seedRecipes = [
     cuisine: 'mediterranean',
     mealType: 'lunch',
     macros: { proteinG: 45, fatG: 14, carbG: 34 },
-    ingredients: ['chicken breast', 'olive oil', 'cucumber', 'tomato', 'rice']
+    ingredients: [
+      { name: 'chicken breast', qty: 220, unit: 'g' },
+      { name: 'olive oil', qty: 15, unit: 'ml' },
+      { name: 'cucumber', qty: 120, unit: 'g' },
+      { name: 'tomato', qty: 150, unit: 'g' },
+      { name: 'rice', qty: 160, unit: 'g' },
+    ]
   },
   {
     id: 'r-tofu-stirfry',
@@ -21,7 +32,13 @@ const seedRecipes = [
     cuisine: 'asian',
     mealType: 'dinner',
     macros: { proteinG: 30, fatG: 16, carbG: 40 },
-    ingredients: ['tofu', 'broccoli', 'soy sauce', 'ginger', 'rice']
+    ingredients: [
+      { name: 'tofu', qty: 200, unit: 'g' },
+      { name: 'broccoli', qty: 150, unit: 'g' },
+      { name: 'soy sauce', qty: 20, unit: 'ml' },
+      { name: 'ginger', qty: 10, unit: 'g' },
+      { name: 'rice', qty: 160, unit: 'g' },
+    ]
   },
   {
     id: 'r-egg-wrap',
@@ -29,7 +46,12 @@ const seedRecipes = [
     cuisine: 'american',
     mealType: 'breakfast',
     macros: { proteinG: 24, fatG: 18, carbG: 22 },
-    ingredients: ['egg', 'tortilla', 'spinach', 'cheese']
+    ingredients: [
+      { name: 'egg', qty: 3, unit: 'item' },
+      { name: 'tortilla', qty: 1, unit: 'item' },
+      { name: 'spinach', qty: 80, unit: 'g' },
+      { name: 'cheese', qty: 30, unit: 'g' },
+    ]
   }
 ];
 
@@ -54,6 +76,13 @@ function validateRecipe(recipe) {
 
   if (!Array.isArray(recipe.ingredients) || recipe.ingredients.length === 0) {
     errors.push('missing_ingredients');
+  }
+
+  if (Array.isArray(recipe.ingredients)) {
+    const invalidIngredient = recipe.ingredients.some((ingredient) => !ingredient.name || !(ingredient.qty > 0) || !ingredient.unit);
+    if (invalidIngredient) {
+      errors.push('invalid_ingredients');
+    }
   }
 
   return {
@@ -85,7 +114,7 @@ function filterRecipes(recipes, query = {}) {
       return false;
     }
 
-    const ingredientSet = new Set(recipe.ingredients.map((i) => normalizeToken(i)));
+    const ingredientSet = new Set(recipe.ingredients.map((i) => normalizeToken(i.name)));
 
     if (includeIngredients.some((ingredient) => !ingredientSet.has(ingredient))) {
       return false;

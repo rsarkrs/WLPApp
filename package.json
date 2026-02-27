@@ -8,13 +8,13 @@
     "apps/*"
   ],
   "scripts": {
-    "lint": "node --check src/recipeImport/pipeline.js && node --check src/recipeImport/pipeline.test.js && node --check src/domain/metabolicEngine.js && node --check src/catalog/recipes.js && node --check src/planner/engine.js && node --check src/api/state.js && node --check tests/qa/planner-engine.test.js && node --check tests/qa/recipe-catalog.test.js && node --check tests/qa/metabolic-engine.test.js && node --check tests/qa/planning-shopping.integration.test.js && node --check tests/qa/app-scaffolds.integration.test.js && node --check tests/qa/api-contract.test.js && node --check tests/qa/support/metabolic-contract.js && node --check apps/api/server.js && node --check apps/web/pages/index.js",
+    "lint": "node --check src/recipeImport/pipeline.js && node --check src/recipeImport/pipeline.test.js && node --check src/domain/metabolicEngine.js && node --check src/catalog/recipes.js && node --check src/planner/engine.js && node --check src/api/state.js && node --check src/shopping/consolidation.js && node --check tests/qa/shopping-consolidation.test.js && node --check tests/qa/planner-engine.test.js && node --check tests/qa/recipe-catalog.test.js && node --check tests/qa/metabolic-engine.test.js && node --check tests/qa/planning-shopping.integration.test.js && node --check tests/qa/app-scaffolds.integration.test.js && node --check tests/qa/api-contract.test.js && node --check tests/qa/support/metabolic-contract.js && node --check apps/api/server.js && node --check apps/web/pages/index.js",
     "typecheck": "node -e \"console.log('typecheck: no TypeScript sources present')\"",
-    "test:unit": "node --test tests/qa/metabolic-engine.test.js tests/qa/recipe-catalog.test.js tests/qa/planner-engine.test.js src/recipeImport/pipeline.test.js",
+    "test:unit": "node --test tests/qa/metabolic-engine.test.js tests/qa/recipe-catalog.test.js tests/qa/planner-engine.test.js tests/qa/shopping-consolidation.test.js src/recipeImport/pipeline.test.js",
     "test:property": "node --test tests/qa/metabolic-engine.property.test.js",
     "test:integration": "node --test tests/qa/planning-shopping.integration.test.js tests/qa/app-scaffolds.integration.test.js",
     "test:contract": "node --test tests/qa/api-contract.test.js",
-    "coverage:check": "node --test tests/qa/metabolic-engine.test.js tests/qa/metabolic-engine.property.test.js tests/qa/recipe-catalog.test.js tests/qa/planner-engine.test.js tests/qa/planning-shopping.integration.test.js tests/qa/app-scaffolds.integration.test.js tests/qa/api-contract.test.js src/recipeImport/pipeline.test.js",
+    "coverage:check": "node --test tests/qa/metabolic-engine.test.js tests/qa/metabolic-engine.property.test.js tests/qa/recipe-catalog.test.js tests/qa/planner-engine.test.js tests/qa/shopping-consolidation.test.js tests/qa/planning-shopping.integration.test.js tests/qa/app-scaffolds.integration.test.js tests/qa/api-contract.test.js src/recipeImport/pipeline.test.js",
     "build": "npm run build --workspaces --if-present",
     "start:web": "npm run dev -w apps/web",
     "start:api": "npm run dev -w apps/api",

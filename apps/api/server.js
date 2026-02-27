@@ -2,6 +2,7 @@ const express = require('express');
 const { computeBmrTdee } = require('../../src/domain/metabolicEngine');
 const { seedRecipes, filterRecipes, validateRecipe } = require('../../src/catalog/recipes');
 const { buildPlanningPreview } = require('../../src/planner/engine');
+const { consolidateShoppingList } = require('../../src/shopping/consolidation');
 const { upsertProfile, getProfile, getPlanningResult, savePlanningResult } = require('../../src/api/state');
 
 const app = express();
@@ -129,6 +130,45 @@ app.post('/v1/plans/generate', (req, res) => {
   }
 });
 
+
+app.get('/v1/shopping/preview', (req, res) => {
+  try {
+    const preview = buildPlanningPreview({
+      recipes: seedRecipes,
+      seed: Number(req.query.seed || 0),
+      days: Number(req.query.days || 7),
+      mealType: req.query.mealType,
+      cuisine: req.query.cuisine,
+      sex: req.query.sex || 'female',
+      dailyCalories: Number(req.query.dailyCalories || 1800),
+      weightKg: Number(req.query.weightKg || 70),
+      requestedWeeklyLossKg: Number(req.query.requestedWeeklyLossKg || 0.4),
+    });
+
+    const plannedRecipes = preview.plan.meals.map((meal) => seedRecipes.find((recipe) => recipe.id === meal.recipeId)).filter(Boolean);
+    const pantryExclusions = String(req.query.pantryExclude || '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    const shoppingList = consolidateShoppingList({
+      meals: plannedRecipes,
+      pantryExclusions,
+    });
+
+    return res.status(200).json({
+      pantryExclusions,
+      totalItems: shoppingList.length,
+      items: shoppingList,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      code: error.code || 'ERR_INVALID_REQUEST',
+      message: error.message,
+    });
+  }
+});
+
 app.get('/v1/plans/preview', (req, res) => {
   try {
     const result = buildPlanningPreview({
@@ -155,7 +195,7 @@ app.get('/v1/plans/preview', (req, res) => {
 app.get('/', (_req, res) => {
   res.status(200).json({
     name: 'WLPApp API scaffold',
-    endpoints: ['/health', '/v1/profile', '/v1/metabolic/preview', '/v1/recipes', '/v1/plans/preview', '/v1/plans/generate']
+    endpoints: ['/health', '/v1/profile', '/v1/metabolic/preview', '/v1/recipes', '/v1/plans/preview', '/v1/plans/generate', '/v1/shopping/preview']
   });
 });
 

@@ -242,6 +242,24 @@ test('integration: plans/generate honors idempotency key', async () => {
     await stopProcess(child);
   }
 });
+
+test('integration: shopping preview consolidates and applies pantry exclusions', async () => {
+  const port = await getFreePort();
+  const { child } = await startProcess('node', ['apps/api/server.js'], 'WLPApp API listening', { env: { PORT: port } });
+
+  try {
+    const response = await fetchWithRetry(
+      `http://127.0.0.1:${port}/v1/shopping/preview?seed=42&mealType=breakfast&cuisine=american&pantryExclude=milk`
+    );
+    assert.equal(response.status, 200);
+
+    const body = await response.json();
+    assert.ok(body.totalItems > 0);
+    assert.equal(body.items.some((item) => item.name === 'milk'), false);
+  } finally {
+    await stopProcess(child);
+  }
+});
 test('integration: web scaffold renders Next.js landing page', async () => {
   const port = await getFreePort();
   const nextBin = path.join(process.cwd(), 'node_modules', '.bin', 'next');
