@@ -39,10 +39,10 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Publish design artifact with traceability to test cases.
 
 ## Phase 5B — Weekly Planner Engine Implementation
-- [ ] Implement deterministic seed-based planner engine.
-- [ ] Implement hard-constraint filtering + soft-constraint scoring pipeline.
-- [ ] Implement macro-match fallback execution path.
-- [ ] Add planner debug trace output and reproducibility tests.
+- [x] Implement deterministic seed-based planner engine.
+- [x] Implement hard-constraint filtering + soft-constraint scoring pipeline.
+- [x] Implement macro-match fallback execution path.
+- [x] Add planner debug trace output and reproducibility tests.
 
 ## Phase 6 — API Endpoints
 - [ ] Add profile + goal management endpoints with validation.
