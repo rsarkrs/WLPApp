@@ -1,6 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
+const path = require('node:path');
+const net = require('node:net');
 
 function startProcess(command, args, readinessText, options = {}) {
   return new Promise((resolve, reject) => {
@@ -22,7 +24,7 @@ function startProcess(command, args, readinessText, options = {}) {
       settled = true;
       child.kill('SIGTERM');
       reject(new Error(`Timed out waiting for readiness text "${readinessText}".\nstdout:\n${stdout}\nstderr:\n${stderr}`));
-    }, 45000);
+    }, 60000);
 
     child.stdout.on('data', (chunk) => {
       const text = chunk.toString();
@@ -54,6 +56,17 @@ function startProcess(command, args, readinessText, options = {}) {
   });
 }
 
+function getFreePort() {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.listen(0, '127.0.0.1', () => {
+      const { port } = server.address();
+      server.close(() => resolve(String(port)));
+    });
+    server.on('error', reject);
+  });
+}
+
 async function stopProcess(child) {
   if (!child || child.killed) return;
 
@@ -72,12 +85,29 @@ async function stopProcess(child) {
   });
 }
 
+async function fetchWithRetry(url, attempts = 20, delayMs = 250) {
+  let lastError;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      const response = await fetch(url);
+      if (response.status === 200) {
+        return response;
+      }
+      lastError = new Error(`unexpected status ${response.status}`);
+    } catch (error) {
+      lastError = error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+  throw lastError;
+}
+
 test('integration: api scaffold responds on /health', async () => {
-  const port = '4100';
+  const port = await getFreePort();
   const { child } = await startProcess('node', ['apps/api/server.js'], 'WLPApp API listening', { env: { PORT: port } });
 
   try {
-    const response = await fetch(`http://127.0.0.1:${port}/health`);
+    const response = await fetchWithRetry(`http://127.0.0.1:${port}/health`);
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), { status: 'ok', service: 'wlpapp-api' });
   } finally {
@@ -85,16 +115,16 @@ test('integration: api scaffold responds on /health', async () => {
   }
 });
 
-test('integration: web scaffold renders landing page', async () => {
-  const port = '3100';
-  const { child } = await startProcess('node', ['apps/web/server.js'], 'WLPApp web listening', { env: { PORT: port } });
+test('integration: web scaffold renders Next.js landing page', async () => {
+  const port = await getFreePort();
+  const nextBin = path.join(process.cwd(), 'node_modules', '.bin', 'next');
+  const { child } = await startProcess(nextBin, ['dev', '-p', port], 'Ready in', { cwd: path.join(process.cwd(), 'apps/web') });
 
   try {
-    const response = await fetch(`http://127.0.0.1:${port}`);
-    assert.equal(response.status, 200);
+    const response = await fetchWithRetry(`http://127.0.0.1:${port}`);
     const html = await response.text();
     assert.match(html, /WLPApp Web Scaffold/);
-    assert.match(html, /Phase 1 scaffold is running\./);
+    assert.match(html, /Phase 1 Next\.js scaffold is running\./);
   } finally {
     await stopProcess(child);
   }
