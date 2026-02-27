@@ -1,4 +1,4 @@
-import crypto from 'node:crypto';
+const crypto = require('node:crypto');
 
 const STOPWORDS = new Set(['the', 'a', 'an', 'recipe', 'best', 'easy', 'simple']);
 const UNIT_ALIASES = {
@@ -36,7 +36,7 @@ const UNIT_ALIASES = {
 
 const REQUIRED_RECIPE_FIELDS = ['name', 'ingredients', 'instructions'];
 
-export async function ingestRecipeFromUrl(url, { fetchImpl = fetch } = {}) {
+async function ingestRecipeFromUrl(url, { fetchImpl = fetch } = {}) {
   const sourceUrl = canonicalizeUrl(url);
   const fetchResult = await fetchStage(sourceUrl, fetchImpl);
   const schemaRecipe = parseSchemaOrgRecipe(fetchResult.html, sourceUrl);
@@ -69,7 +69,7 @@ export async function ingestRecipeFromUrl(url, { fetchImpl = fetch } = {}) {
   };
 }
 
-export async function fetchStage(url, fetchImpl = fetch) {
+async function fetchStage(url, fetchImpl = fetch) {
   const response = await fetchImpl(url, {
     method: 'GET',
     headers: {
@@ -88,7 +88,7 @@ export async function fetchStage(url, fetchImpl = fetch) {
   };
 }
 
-export function parseSchemaOrgRecipe(html, sourceUrl) {
+function parseSchemaOrgRecipe(html, sourceUrl) {
   const scriptMatches = [...html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
 
   for (const [, payload] of scriptMatches) {
@@ -168,7 +168,7 @@ function normalizeInstructions(instructions) {
   return [];
 }
 
-export function fallbackExtractor(html, sourceUrl) {
+function fallbackExtractor(html, sourceUrl) {
   const title = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim();
   const ingredientMatches = [...html.matchAll(/<li[^>]*>([^<]*(cup|tbsp|tsp|gram|g|oz|lb)[^<]*)<\/li>/gi)].map((m) => m[1].trim());
   const paragraphSteps = [...html.matchAll(/<p[^>]*>([^<]{20,})<\/p>/gi)]
@@ -184,7 +184,7 @@ export function fallbackExtractor(html, sourceUrl) {
   };
 }
 
-export function normalizeIngredients(ingredients) {
+function normalizeIngredients(ingredients) {
   return ingredients.map((raw) => {
     const parsed = parseIngredient(raw);
     return {
@@ -211,7 +211,7 @@ function parseIngredient(raw) {
   return { quantity: Number.isFinite(quantity) ? quantity : null, unit, item };
 }
 
-export function mapNutrition(nutrition = {}, ingredients = []) {
+function mapNutrition(nutrition = {}, ingredients = []) {
   const calories = toNumber(nutrition.calories);
   const protein = toNumber(nutrition.proteinContent);
   const carbs = toNumber(nutrition.carbohydrateContent);
@@ -244,7 +244,7 @@ function toNumber(value) {
   return match ? Number.parseFloat(match[0]) : null;
 }
 
-export function validateRecipe(recipe) {
+function validateRecipe(recipe) {
   const errors = [];
   const warnings = [];
 
@@ -273,7 +273,7 @@ export function validateRecipe(recipe) {
   };
 }
 
-export function buildDedupeKeys(recipe) {
+function buildDedupeKeys(recipe) {
   const canonicalUrl = canonicalizeUrl(recipe.sourceUrl);
   const normalizedName = normalizeName(recipe.name || '');
   const ingredientSignature = recipe.ingredients
@@ -293,7 +293,7 @@ export function buildDedupeKeys(recipe) {
   };
 }
 
-export function canonicalizeUrl(input) {
+function canonicalizeUrl(input) {
   const url = new URL(input);
 
   const dropParams = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid']);
@@ -327,3 +327,16 @@ function normalizeName(name) {
     .join(' ')
     .trim();
 }
+
+
+module.exports = {
+  ingestRecipeFromUrl,
+  fetchStage,
+  parseSchemaOrgRecipe,
+  fallbackExtractor,
+  normalizeIngredients,
+  mapNutrition,
+  validateRecipe,
+  buildDedupeKeys,
+  canonicalizeUrl,
+};
