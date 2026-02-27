@@ -21,6 +21,10 @@
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
-    "db:status": "docker compose ps postgres"
+    "db:status": "docker compose ps postgres",
+    "coverage:engine": "rm -rf coverage && c8 --reporter=json-summary --all --include=src/domain/metabolicEngine.js node --test tests/qa/metabolic-engine.test.js tests/qa/metabolic-engine.property.test.js && node scripts/check_engine_coverage.js"
+  },
+  "devDependencies": {
+    "c8": "^10.1.2"
   }
 }
