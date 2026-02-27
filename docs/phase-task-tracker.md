@@ -60,9 +60,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Add dedupe keying and import validation/error states.
 
 ## Phase 9 — QA Hardening
-- [ ] Extend unit/edge coverage for metabolic/planning boundaries.
-- [ ] Add integration coverage for planner + shopping + import flows.
-- [ ] Add API contract tests for frontend/backend payload parity.
+- [x] Extend unit/edge coverage for metabolic/planning boundaries.
+- [x] Add integration coverage for planner + shopping + import flows.
+- [x] Add API contract tests for frontend/backend payload parity.
 
 ## Phase 10 — Frontend UI (MVP)
 - [ ] Build profile and goal setup flow.
