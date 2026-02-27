@@ -28,7 +28,7 @@ Examples:
 
 ## Merge Policy
 - `main` is updated through reviewed PRs only.
-- Require at least one approval before merge.
+- Canonical autonomous mode: require `0` approvals and rely on required status checks; if human-review mode is desired, raise approvals in branch protection/rulesets.
 - Prefer squash merge to keep history clean.
 
 ## GitHub Enforcement

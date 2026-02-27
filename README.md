@@ -258,3 +258,5 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Merge to `main` through Pull Requests only (no direct pushes).
 - GitHub enforcement details live in `.github/workflows/pr-policy.yml` and `.github/BRANCH_PROTECTION.md`.
 - Automation scripts for auth/PR creation live in `scripts/bootstrap_github_auth.sh` and `scripts/create_pr.sh`.
+- Multi-agent program operations and lane/dependency model live in `docs/multi-agent-workflow.md`.
+- Handoff templates for cross-agent contract/schema/QA transfers live in `docs/handoffs/`.

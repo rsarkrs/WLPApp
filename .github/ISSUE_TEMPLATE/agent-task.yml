@@ -1,0 +1,46 @@
+name: Agent Task
+description: Structured task for builder/reviewer/domain/release lanes
+title: "Feat/phaseX-<short-task-name>"
+labels: ["agent-task"]
+body:
+  - type: input
+    id: phase
+    attributes:
+      label: Roadmap phase
+      description: Example: Phase 2
+    validations:
+      required: true
+  - type: dropdown
+    id: lane
+    attributes:
+      label: Agent lane
+      options:
+        - builder
+        - reviewer
+        - domain-reviewer
+        - release
+    validations:
+      required: true
+  - type: input
+    id: owner
+    attributes:
+      label: Owner
+    validations:
+      required: true
+  - type: textarea
+    id: depends_on
+    attributes:
+      label: Dependencies
+      description: List issue/PR links this task depends on
+  - type: textarea
+    id: definition_of_done
+    attributes:
+      label: Definition of Done (verifiable)
+      description: Copy from roadmap phase and tailor to this task
+    validations:
+      required: true
+  - type: textarea
+    id: handoff_artifacts
+    attributes:
+      label: Handoff artifact links
+      description: docs/handoffs/*.md links relevant to this task

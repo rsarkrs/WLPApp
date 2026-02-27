@@ -23,16 +23,19 @@ This repository supports a two-agent PR model:
      - `PR Policy Checks / naming-convention`
      - `QA Gates / Dedicated QA Phase`
      - `Reviewer Agent Gate / Reviewer Agent Gate`
+     - `Domain Review Gate / Domain Review Gate`
 2. **Pull request approvals**
-   - Keep/reinforce at least 1 required approval.
+   - Canonical autonomous mode: set required approvals to **0**.
+   - Optional human-review mode: set approvals >0 and keep all required checks.
 3. **Token permissions (if using external bot/app reviewers)**
    - Ensure the reviewer identity can read checks and write PR comments.
 
 ## Operating loop
 
 - Builder Agent pushes fix commits.
-- Reviewer Agent Gate auto-runs and refreshes a single feedback comment.
-- When gate + required checks pass and approval policy is satisfied, PR is mergeable.
+- Reviewer Agent Gate auto-runs and refreshes a single mergeability/check feedback comment.
+- Domain Review Gate auto-runs and enforces schema/QA parity guardrails.
+- When gates + required checks pass and approval policy is satisfied, PR is mergeable.
 
 ## Autonomous merge (practical minimal path)
 
@@ -40,8 +43,9 @@ This repository supports a two-agent PR model:
    - `PR Policy Checks / naming-convention`
    - `QA Gates / Dedicated QA Phase`
    - `Reviewer Agent Gate / Reviewer Agent Gate`
+   - `Domain Review Gate / Domain Review Gate`
 2. Set required approvals to **0** (or keep >0 only if a bot with write access can submit APPROVED reviews).
 3. Enable repository auto-merge.
 4. Use `.github/workflows/auto-merge-controller.yml` to automatically enable squash auto-merge once all required checks are green.
 
-This yields a fully autonomous builder+reviewer+merge loop without manual button presses.
+This is the canonical repository mode and yields a fully autonomous builder+reviewer+merge loop without manual button presses.
