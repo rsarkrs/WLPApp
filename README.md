@@ -225,7 +225,15 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Weekly review flow (macro visibility, swap/regenerate).
 - Shopping list view (grouped list + export).
 
-### Phase 10: Production Readiness & Deployment
+### Phase 11: Dedicated QA & Release Readiness
+- Enforce pre-deployment QA gate for every release candidate.
+- Add unit tests for BMR/TDEE calculations, deficit-cap enforcement, calorie floors, and macro split logic.
+- Add property and edge-case tests for extreme physiological input ranges and aggressive goals.
+- Add integration tests for weekly plan generation and shopping-list aggregation behavior.
+- Add API contract tests validating frontend/backend request-response compatibility.
+- Enforce CI coverage thresholds for core engine modules before deployment.
+
+### Phase 12: Production Readiness & Deployment
 - Add structured logging with request correlation IDs propagated across API, planner jobs, and import workers.
 - Add `/health/live` and `/health/ready` endpoints with dependency checks, including PostgreSQL connectivity and migration status.
 - Add service-level metrics dashboards and alerts for:
@@ -234,16 +242,6 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
   - Rule-validation failure counts by rule type
 - Add error monitoring and alert thresholds for critical services (API, planner, importer, database) with on-call escalation paths.
 - Define and test backup/restore runbooks plus migration rollback procedures before production cutovers.
-### Phase 10: Dedicated QA & Release Readiness
-- Enforce pre-deployment QA gate for every release candidate.
-- Add unit tests for BMR/TDEE calculations, deficit-cap enforcement, calorie floors, and macro split logic.
-- Add property and edge-case tests for extreme physiological input ranges and aggressive goals.
-- Add integration tests for weekly plan generation and shopping-list aggregation behavior.
-- Add API contract tests validating frontend/backend request-response compatibility.
-- Enforce CI coverage thresholds for core engine modules before deployment.
-
-### Phase 11: Production Readiness & Deployment
-- Add observability: structured logs, health checks, metrics, alerts.
 - Require the dedicated QA phase to pass in CI before deploy jobs can run.
 - Deploy backend (Render/Railway) and frontend (Vercel).
 - Configure secure environment variables and production DB.

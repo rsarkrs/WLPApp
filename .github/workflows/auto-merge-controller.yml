@@ -74,13 +74,39 @@ jobs:
               return;
             }
 
-            await github.graphql(
-              `mutation($pullRequestId:ID!) {
-                enablePullRequestAutoMerge(input:{pullRequestId:$pullRequestId, mergeMethod:SQUASH}) {
-                  clientMutationId
-                }
-              }`,
-              { pullRequestId: pr.node_id },
-            );
+            let autoMergeEnabled = false;
+            for (let attempt = 0; attempt < 6; attempt += 1) {
+              const latestPr = await getPr();
+              if (latestPr.auto_merge) {
+                core.info('Auto-merge already enabled.');
+                autoMergeEnabled = true;
+                break;
+              }
 
-            core.info('Auto-merge enabled for PR.');
+              try {
+                await github.graphql(
+                  `mutation($pullRequestId:ID!) {
+                    enablePullRequestAutoMerge(input:{pullRequestId:$pullRequestId, mergeMethod:SQUASH}) {
+                      clientMutationId
+                    }
+                  }`,
+                  { pullRequestId: latestPr.node_id },
+                );
+                core.info('Auto-merge enabled for PR.');
+                autoMergeEnabled = true;
+                break;
+              } catch (error) {
+                const message = String(error?.message || error);
+                const unstable = message.includes('unstable status') || message.includes('UNPROCESSABLE');
+                if (!unstable || attempt === 5) {
+                  core.info(`Auto-merge not enabled yet (${message}).`);
+                  break;
+                }
+                core.info(`Auto-merge attempt ${attempt + 1}/6 hit unstable state; retrying in 10s.`);
+                await new Promise((resolve) => setTimeout(resolve, 10000));
+              }
+            }
+
+            if (!autoMergeEnabled) {
+              core.info('Auto-merge was not enabled in this run; leaving PR mergeable state unchanged.');
+            }
