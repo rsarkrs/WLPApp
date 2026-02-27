@@ -50,9 +50,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Add endpoint-level tests and validation error contracts.
 
 ## Phase 7 — Shopping List Consolidation
-- [ ] Aggregate duplicate ingredients across selected recipes.
-- [ ] Normalize ingredient units and support conversion map.
-- [ ] Add grouped shopping list API with pantry-aware reduction.
+- [x] Aggregate duplicate ingredients across selected recipes.
+- [x] Normalize ingredient units and support conversion map.
+- [x] Add grouped shopping list API with pantry-aware reduction.
 
 ## Phase 8 — Recipe Import Pipeline
 - [ ] Build URL import API endpoint and import status model.
