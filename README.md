@@ -66,6 +66,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - API scaffold now includes profile and idempotent planning endpoints (`/v1/profile`, `/v1/plans/generate`).
 - API scaffold now includes shopping consolidation preview endpoint (`/v1/shopping/preview`) with pantry exclusion support.
 - API scaffold now includes recipe import run endpoints (`/v1/imports`, `/v1/imports/:id`) with dedupe detection.
+- QA hardening now includes shared API payload contract validators (`src/contracts/api.js`) with contract tests against live API responses.
 - CI-friendly root `build` script now executes workspace build scripts.
 
 #### Local startup commands (scaffold)
