@@ -142,6 +142,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
   - Ingredient units and quantities pass normalization validation for all seeded recipes.
 
 ### Phase 5A: Weekly Planner Algorithm Design
+- Design artifact: [`docs/planner/algorithm-design.md`](docs/planner/algorithm-design.md).
 - Define planner objective function and scoring weights:
   - Macro target fit score
   - Ingredient overlap score
