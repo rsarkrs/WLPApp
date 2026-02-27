@@ -2,8 +2,9 @@ const express = require('express');
 const { computeBmrTdee } = require('../../src/domain/metabolicEngine');
 const { seedRecipes, filterRecipes, validateRecipe } = require('../../src/catalog/recipes');
 const { buildPlanningPreview } = require('../../src/planner/engine');
+const { ingestRecipeFromUrl } = require('../../src/recipeImport/pipeline');
 const { consolidateShoppingList } = require('../../src/shopping/consolidation');
-const { upsertProfile, getProfile, getPlanningResult, savePlanningResult } = require('../../src/api/state');
+const { upsertProfile, getProfile, getPlanningResult, savePlanningResult, nextImportRunId, saveImportRun, getImportRun, findImportRunByHash } = require('../../src/api/state');
 
 const app = express();
 app.use(express.json());
@@ -74,6 +75,73 @@ app.post('/v1/profile', (req, res) => {
 
   const profile = upsertProfile(payload);
   return res.status(200).json(profile);
+});
+
+
+app.post('/v1/imports', async (req, res) => {
+  const payload = req.body || {};
+
+  if (!payload.sourceUrl) {
+    return res.status(400).json({
+      code: 'ERR_MISSING_SOURCE_URL',
+      message: 'sourceUrl is required.',
+    });
+  }
+
+  try {
+    let fetchImpl;
+    if (payload.html) {
+      fetchImpl = async () => ({
+        ok: true,
+        status: 200,
+        text: async () => payload.html,
+      });
+    }
+
+    const importResult = await ingestRecipeFromUrl(payload.sourceUrl, fetchImpl ? { fetchImpl } : undefined);
+    const existing = findImportRunByHash(importResult.dedupe.recipeHash);
+
+    if (existing) {
+      return res.status(200).json({
+        id: existing.id,
+        importStatus: 'duplicate',
+        duplicateOf: existing.id,
+        sourceAttribution: importResult.sourceAttribution,
+        dedupe: importResult.dedupe,
+      });
+    }
+
+    const run = saveImportRun({
+      id: nextImportRunId(),
+      importStatus: importResult.importStatus,
+      errors: importResult.errors,
+      warnings: importResult.warnings,
+      sourceAttribution: importResult.sourceAttribution,
+      dedupe: importResult.dedupe,
+      recipe: importResult.recipe,
+      recipeHash: importResult.dedupe.recipeHash,
+      createdAt: new Date().toISOString(),
+    });
+
+    return res.status(200).json(run);
+  } catch (error) {
+    return res.status(400).json({
+      code: error.code || 'ERR_IMPORT_FAILED',
+      message: error.message,
+    });
+  }
+});
+
+app.get('/v1/imports/:id', (req, res) => {
+  const run = getImportRun(req.params.id);
+  if (!run) {
+    return res.status(404).json({
+      code: 'ERR_IMPORT_NOT_FOUND',
+      message: 'Import run not found.',
+    });
+  }
+
+  return res.status(200).json(run);
 });
 
 app.get('/v1/profile', (req, res) => {
@@ -195,7 +263,7 @@ app.get('/v1/plans/preview', (req, res) => {
 app.get('/', (_req, res) => {
   res.status(200).json({
     name: 'WLPApp API scaffold',
-    endpoints: ['/health', '/v1/profile', '/v1/metabolic/preview', '/v1/recipes', '/v1/plans/preview', '/v1/plans/generate', '/v1/shopping/preview']
+    endpoints: ['/health', '/v1/profile', '/v1/imports', '/v1/metabolic/preview', '/v1/recipes', '/v1/plans/preview', '/v1/plans/generate', '/v1/shopping/preview']
   });
 });
 

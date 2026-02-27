@@ -260,6 +260,38 @@ test('integration: shopping preview consolidates and applies pantry exclusions',
     await stopProcess(child);
   }
 });
+
+test('integration: recipe import endpoint stores run and returns duplicate on same payload', async () => {
+  const port = await getFreePort();
+  const { child } = await startProcess('node', ['apps/api/server.js'], 'WLPApp API listening', { env: { PORT: port } });
+
+  const html = `<html><head><script type="application/ld+json">{"@context":"https://schema.org","@type":"Recipe","name":"Import Soup","recipeIngredient":["1 cup broth"],"recipeInstructions":["Boil."]}</script></head><body></body></html>`;
+
+  try {
+    const first = await fetch(`http://127.0.0.1:${port}/v1/imports`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sourceUrl: 'https://example.com/soup?utm_source=x', html }),
+    });
+    assert.equal(first.status, 200);
+    const firstBody = await first.json();
+    assert.equal(firstBody.importStatus, 'imported');
+
+    const getRun = await fetchWithRetry(`http://127.0.0.1:${port}/v1/imports/${firstBody.id}`);
+    assert.equal(getRun.status, 200);
+
+    const second = await fetch(`http://127.0.0.1:${port}/v1/imports`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sourceUrl: 'https://example.com/soup?utm_source=y', html }),
+    });
+    const secondBody = await second.json();
+    assert.equal(secondBody.importStatus, 'duplicate');
+    assert.equal(secondBody.duplicateOf, firstBody.id);
+  } finally {
+    await stopProcess(child);
+  }
+});
 test('integration: web scaffold renders Next.js landing page', async () => {
   const port = await getFreePort();
   const nextBin = path.join(process.cwd(), 'node_modules', '.bin', 'next');
