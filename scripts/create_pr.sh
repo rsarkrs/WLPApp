@@ -49,6 +49,11 @@ fi
 
 git push -u origin "$HEAD_BRANCH"
 
+if ! git show-ref --verify --quiet "refs/remotes/origin/${BASE_BRANCH}"; then
+  echo "Remote tracking ref origin/${BASE_BRANCH} not found locally; fetching for PR base diff calculations." >&2
+  git fetch origin "${BASE_BRANCH}:refs/remotes/origin/${BASE_BRANCH}" >/dev/null 2>&1 || git fetch origin "$BASE_BRANCH"
+fi
+
 if command -v gh >/dev/null 2>&1; then
   if [[ -n "$BODY_FILE" ]]; then
     gh pr create --base "$BASE_BRANCH" --head "$HEAD_BRANCH" --title "$TITLE" --body-file "$BODY_FILE"

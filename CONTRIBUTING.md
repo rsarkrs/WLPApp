@@ -37,6 +37,6 @@ Examples:
 
 ## Automation Helpers
 - `scripts/bootstrap_github_auth.sh`: configures `origin` and validates GitHub auth using `gh` or `curl` + token fallback.
-- `scripts/create_pr.sh`: validates naming policy, auto-renames non-compliant local branch names to `Chore/<sanitized-name>`, pushes branch, and creates a PR via `gh` or GitHub API fallback.
+- `scripts/create_pr.sh`: validates naming policy, auto-renames non-compliant local branch names to `Chore/<sanitized-name>`, ensures the PR base tracking ref is fetched locally, pushes branch, and creates a PR via `gh` or GitHub API fallback.
 - Recommended workflow: create commits first, then run `scripts/create_pr.sh` to enforce branch/PR naming policy before opening a PR.
 - Required env for API fallback: `GITHUB_TOKEN` (or `GH_TOKEN`).
