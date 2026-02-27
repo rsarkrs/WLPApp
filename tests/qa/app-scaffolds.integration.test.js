@@ -301,7 +301,10 @@ test('integration: web scaffold renders Next.js landing page', async () => {
     const response = await fetchWithRetry(`http://127.0.0.1:${port}`);
     const html = await response.text();
     assert.match(html, /WLPApp Web Scaffold/);
-    assert.match(html, /Phase 1 Next\.js scaffold is running\./);
+    assert.match(html, /Phase 10 profile and goal setup flow is running\./);
+    assert.match(html, /Household ID/);
+    assert.match(html, /Target daily calories/);
+    assert.match(html, /Save profile/);
   } finally {
     await stopProcess(child);
   }

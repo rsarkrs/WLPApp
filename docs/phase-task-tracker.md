@@ -65,7 +65,7 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Add API contract tests for frontend/backend payload parity.
 
 ## Phase 10 — Frontend UI (MVP)
-- [ ] Build profile and goal setup flow.
+- [x] Build profile and goal setup flow.
 - [ ] Build weekly planner view with regenerate/swap flow.
 - [ ] Build shopping list grouped view and export action.
 
