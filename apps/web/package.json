@@ -1,0 +1,10 @@
+{
+  "name": "@wlpapp/web",
+  "private": true,
+  "version": "0.1.0",
+  "description": "WLPApp web scaffold",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "node -e \"console.log('apps/web build: scaffold ready')\""
+  }
+}
