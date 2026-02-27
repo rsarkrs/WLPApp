@@ -6,38 +6,10 @@ const seedRecipes = [
     mealType: 'breakfast',
     macros: { proteinG: 28, fatG: 11, carbG: 52 },
     ingredients: [
-      { name: 'oats', qty: 80, unit: 'g' },
-      { name: 'milk', qty: 250, unit: 'ml' },
-      { name: 'chia seeds', qty: 15, unit: 'g' },
-      { name: 'berries', qty: 100, unit: 'g' },
-    ]
-  },
-  {
-    id: 'r-greek-chicken',
-    name: 'Greek Chicken Plate',
-    cuisine: 'mediterranean',
-    mealType: 'lunch',
-    macros: { proteinG: 45, fatG: 14, carbG: 34 },
-    ingredients: [
-      { name: 'chicken breast', qty: 220, unit: 'g' },
-      { name: 'olive oil', qty: 15, unit: 'ml' },
-      { name: 'cucumber', qty: 120, unit: 'g' },
-      { name: 'tomato', qty: 150, unit: 'g' },
-      { name: 'rice', qty: 160, unit: 'g' },
-    ]
-  },
-  {
-    id: 'r-tofu-stirfry',
-    name: 'Tofu Veggie Stir Fry',
-    cuisine: 'asian',
-    mealType: 'dinner',
-    macros: { proteinG: 30, fatG: 16, carbG: 40 },
-    ingredients: [
-      { name: 'tofu', qty: 200, unit: 'g' },
-      { name: 'broccoli', qty: 150, unit: 'g' },
-      { name: 'soy sauce', qty: 20, unit: 'ml' },
-      { name: 'ginger', qty: 10, unit: 'g' },
-      { name: 'rice', qty: 160, unit: 'g' },
+      { name: 'oats', qty: 80, unit: 'g', category: 'grains' },
+      { name: 'milk', qty: 250, unit: 'ml', category: 'dairy' },
+      { name: 'chia seeds', qty: 15, unit: 'g', category: 'pantry' },
+      { name: 'berries', qty: 100, unit: 'g', category: 'veggies' },
     ]
   },
   {
@@ -47,12 +19,96 @@ const seedRecipes = [
     mealType: 'breakfast',
     macros: { proteinG: 24, fatG: 18, carbG: 22 },
     ingredients: [
-      { name: 'egg', qty: 3, unit: 'item' },
-      { name: 'tortilla', qty: 1, unit: 'item' },
-      { name: 'spinach', qty: 80, unit: 'g' },
-      { name: 'cheese', qty: 30, unit: 'g' },
+      { name: 'egg', qty: 3, unit: 'item', category: 'protein' },
+      { name: 'tortilla', qty: 1, unit: 'item', category: 'bread' },
+      { name: 'spinach', qty: 80, unit: 'g', category: 'veggies' },
+      { name: 'cheese', qty: 30, unit: 'g', category: 'dairy' },
     ]
-  }
+  },
+  {
+    id: 'r-greek-chicken',
+    name: 'Greek Chicken Plate',
+    cuisine: 'mediterranean',
+    mealType: 'lunch',
+    macros: { proteinG: 45, fatG: 14, carbG: 34 },
+    ingredients: [
+      { name: 'chicken breast', qty: 220, unit: 'g', category: 'protein' },
+      { name: 'olive oil', qty: 15, unit: 'ml', category: 'pantry' },
+      { name: 'cucumber', qty: 120, unit: 'g', category: 'veggies' },
+      { name: 'tomato', qty: 150, unit: 'g', category: 'veggies' },
+      { name: 'rice', qty: 160, unit: 'g', category: 'grains' },
+    ]
+  },
+  {
+    id: 'r-turkey-sandwich',
+    name: 'Turkey Avocado Sandwich',
+    cuisine: 'american',
+    mealType: 'lunch',
+    macros: { proteinG: 37, fatG: 16, carbG: 41 },
+    ingredients: [
+      { name: 'turkey breast', qty: 170, unit: 'g', category: 'protein' },
+      { name: 'whole grain bread', qty: 2, unit: 'item', category: 'bread' },
+      { name: 'avocado', qty: 80, unit: 'g', category: 'veggies' },
+      { name: 'lettuce', qty: 70, unit: 'g', category: 'veggies' },
+      { name: 'tomato', qty: 70, unit: 'g', category: 'veggies' },
+    ]
+  },
+  {
+    id: 'r-beef-rice-bowl',
+    name: 'Beef Rice Bowl',
+    cuisine: 'asian',
+    mealType: 'lunch',
+    macros: { proteinG: 42, fatG: 19, carbG: 48 },
+    ingredients: [
+      { name: 'lean beef', qty: 210, unit: 'g', category: 'protein' },
+      { name: 'rice', qty: 180, unit: 'g', category: 'grains' },
+      { name: 'carrot', qty: 90, unit: 'g', category: 'veggies' },
+      { name: 'broccoli', qty: 120, unit: 'g', category: 'veggies' },
+      { name: 'soy sauce', qty: 18, unit: 'ml', category: 'pantry' },
+    ]
+  },
+  {
+    id: 'r-tofu-stirfry',
+    name: 'Tofu Veggie Stir Fry',
+    cuisine: 'asian',
+    mealType: 'dinner',
+    macros: { proteinG: 30, fatG: 16, carbG: 40 },
+    ingredients: [
+      { name: 'tofu', qty: 200, unit: 'g', category: 'protein' },
+      { name: 'broccoli', qty: 150, unit: 'g', category: 'veggies' },
+      { name: 'soy sauce', qty: 20, unit: 'ml', category: 'pantry' },
+      { name: 'ginger', qty: 10, unit: 'g', category: 'pantry' },
+      { name: 'rice', qty: 160, unit: 'g', category: 'grains' },
+    ]
+  },
+  {
+    id: 'r-salmon-potatoes',
+    name: 'Salmon and Potatoes',
+    cuisine: 'american',
+    mealType: 'dinner',
+    macros: { proteinG: 40, fatG: 22, carbG: 36 },
+    ingredients: [
+      { name: 'salmon', qty: 220, unit: 'g', category: 'protein' },
+      { name: 'potato', qty: 260, unit: 'g', category: 'veggies' },
+      { name: 'asparagus', qty: 160, unit: 'g', category: 'veggies' },
+      { name: 'olive oil', qty: 12, unit: 'ml', category: 'pantry' },
+      { name: 'lemon', qty: 40, unit: 'g', category: 'veggies' },
+    ]
+  },
+  {
+    id: 'r-chicken-pasta',
+    name: 'Chicken Pasta Primavera',
+    cuisine: 'mediterranean',
+    mealType: 'dinner',
+    macros: { proteinG: 44, fatG: 15, carbG: 54 },
+    ingredients: [
+      { name: 'chicken breast', qty: 210, unit: 'g', category: 'protein' },
+      { name: 'pasta', qty: 170, unit: 'g', category: 'grains' },
+      { name: 'zucchini', qty: 120, unit: 'g', category: 'veggies' },
+      { name: 'bell pepper', qty: 100, unit: 'g', category: 'veggies' },
+      { name: 'olive oil', qty: 15, unit: 'ml', category: 'pantry' },
+    ]
+  },
 ];
 
 function normalizeToken(value) {

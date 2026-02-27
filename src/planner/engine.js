@@ -12,6 +12,28 @@ function macroError(target, actual) {
     + Math.abs((target.carbG || 0) - (actual.carbG || 0));
 }
 
+function flattenDays(days) {
+  return days.flatMap((day) => day.meals);
+}
+
+function summarizeMacros(meals, divisor) {
+  const aggregate = meals.reduce(
+    (acc, item) => {
+      acc.proteinG += item.macros.proteinG || 0;
+      acc.fatG += item.macros.fatG || 0;
+      acc.carbG += item.macros.carbG || 0;
+      return acc;
+    },
+    { proteinG: 0, fatG: 0, carbG: 0 }
+  );
+
+  return {
+    proteinG: Math.round(aggregate.proteinG / divisor),
+    fatG: Math.round(aggregate.fatG / divisor),
+    carbG: Math.round(aggregate.carbG / divisor),
+  };
+}
+
 function planWeek({ recipes, seed = 0, days = 7, mealType, cuisine, targetMacros }) {
   const filtered = filterRecipes(recipes, { mealType, cuisine });
 
@@ -30,6 +52,7 @@ function planWeek({ recipes, seed = 0, days = 7, mealType, cuisine, targetMacros
     const recipe = filtered[idx];
     meals.push({
       day: i + 1,
+      slot: mealType || 'meal',
       recipeId: recipe.id,
       recipeName: recipe.name,
       macros: recipe.macros,
@@ -37,27 +60,13 @@ function planWeek({ recipes, seed = 0, days = 7, mealType, cuisine, targetMacros
     });
   }
 
-  const aggregate = meals.reduce(
-    (acc, item) => {
-      acc.proteinG += item.macros.proteinG || 0;
-      acc.fatG += item.macros.fatG || 0;
-      acc.carbG += item.macros.carbG || 0;
-      return acc;
-    },
-    { proteinG: 0, fatG: 0, carbG: 0 }
-  );
-
-  const average = {
-    proteinG: Math.round(aggregate.proteinG / days),
-    fatG: Math.round(aggregate.fatG / days),
-    carbG: Math.round(aggregate.carbG / days),
-  };
-
+  const average = summarizeMacros(meals, days);
   const error = macroError(targetMacros, average);
   const tolerance = 18;
 
   return {
     meals,
+    days: meals.map((meal) => ({ day: meal.day, meals: [meal] })),
     averageMacros: average,
     macroError: error,
     fallbackApplied: error > tolerance,
@@ -69,12 +78,64 @@ function planWeek({ recipes, seed = 0, days = 7, mealType, cuisine, targetMacros
   };
 }
 
+function planWeekByMeals({ recipes, seed = 0, days = 7, cuisine, targetMacros }) {
+  const slots = ['breakfast', 'lunch', 'dinner'];
+  const daysResult = [];
+  const debug = [];
+
+  for (let dayIndex = 0; dayIndex < days; dayIndex += 1) {
+    const dayMeals = [];
+    for (const [slotIndex, slot] of slots.entries()) {
+      const filtered = filterRecipes(recipes, { mealType: slot, cuisine });
+      if (filtered.length === 0) {
+        debug.push({ step: 'filter', details: { slot, cuisine, matchedCount: 0, day: dayIndex + 1 } });
+        continue;
+      }
+
+      const idx = seededIndex(seed + slotIndex * 31, dayIndex, filtered.length);
+      const recipe = filtered[idx];
+      dayMeals.push({
+        day: dayIndex + 1,
+        slot,
+        recipeId: recipe.id,
+        recipeName: recipe.name,
+        macros: recipe.macros,
+        selectionReason: `seeded_index_${idx}`,
+      });
+
+      debug.push({ step: 'filter', details: { slot, cuisine, matchedCount: filtered.length, day: dayIndex + 1 } });
+    }
+
+    daysResult.push({ day: dayIndex + 1, meals: dayMeals });
+  }
+
+  const meals = flattenDays(daysResult);
+  const average = summarizeMacros(meals, Math.max(meals.length, 1));
+  const error = macroError(targetMacros, average);
+  const tolerance = 18;
+
+  return {
+    meals,
+    days: daysResult,
+    averageMacros: average,
+    macroError: error,
+    fallbackApplied: meals.length === 0 || error > tolerance,
+    fallbackReasonCode: meals.length === 0 ? 'ERR_NO_RECIPES_MATCH_FILTERS' : (error > tolerance ? 'ERR_MACRO_MATCH_NOT_FOUND' : null),
+    debug: [
+      ...debug,
+      { step: 'macro_evaluation', details: { error, tolerance } },
+    ],
+  };
+}
+
 function buildPlanningPreview({ recipes, seed = 0, days = 7, mealType, cuisine, sex, dailyCalories, weightKg, requestedWeeklyLossKg }) {
   const calorie = applyCalorieFloor({ sex, proposedDailyCalories: dailyCalories });
   const weeklyCap = applyWeeklyCap({ currentWeightKg: weightKg, requestedWeeklyLossKg });
   const targetMacros = allocateMacros({ dailyCalories: calorie.finalDailyCalories, weightKg });
 
-  const plan = planWeek({ recipes, seed, days, mealType, cuisine, targetMacros });
+  const plan = mealType
+    ? planWeek({ recipes, seed, days, mealType, cuisine, targetMacros })
+    : planWeekByMeals({ recipes, seed, days, cuisine, targetMacros });
 
   return {
     plan,
@@ -89,5 +150,6 @@ function buildPlanningPreview({ recipes, seed = 0, days = 7, mealType, cuisine, 
 module.exports = {
   seededIndex,
   planWeek,
+  planWeekByMeals,
   buildPlanningPreview,
 };
