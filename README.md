@@ -62,6 +62,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Monorepo workspaces are initialized via root `package.json` workspaces (`apps/*`).
 - `apps/web` and `apps/api` now include runnable scaffolds (Next.js web shell + Express API shell) to unblock parallel feature work.
 - API scaffold now includes recipe catalog filtering preview endpoint (`/v1/recipes`) with cuisine/meal-type/include/exclude ingredient filtering.
+- Planner preview endpoint available at `/v1/plans/preview` for deterministic seeded plan debugging and safety preview.
 - CI-friendly root `build` script now executes workspace build scripts.
 
 #### Local startup commands (scaffold)

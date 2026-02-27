@@ -151,6 +151,25 @@ test('integration: recipe catalog endpoint supports filters', async () => {
     await stopProcess(child);
   }
 });
+
+test('integration: planner preview endpoint is deterministic with same seed', async () => {
+  const port = await getFreePort();
+  const { child } = await startProcess('node', ['apps/api/server.js'], 'WLPApp API listening', { env: { PORT: port } });
+
+  try {
+    const url = `http://127.0.0.1:${port}/v1/plans/preview?seed=42&mealType=breakfast&cuisine=american&sex=female&dailyCalories=1600&weightKg=70&requestedWeeklyLossKg=0.5`;
+    const first = await fetchWithRetry(url);
+    const second = await fetchWithRetry(url);
+
+    const firstBody = await first.json();
+    const secondBody = await second.json();
+
+    assert.deepEqual(firstBody.plan.meals, secondBody.plan.meals);
+    assert.equal(firstBody.safety.calorie.floorApplied, false);
+  } finally {
+    await stopProcess(child);
+  }
+});
 test('integration: web scaffold renders Next.js landing page', async () => {
   const port = await getFreePort();
   const nextBin = path.join(process.cwd(), 'node_modules', '.bin', 'next');
