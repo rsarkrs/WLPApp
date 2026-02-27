@@ -36,7 +36,7 @@ export default function HomePage() {
     if (configuredBase) {
       return configuredBase.replace(/\/$/, '');
     }
-    return 'http://localhost:4000';
+    return '/api';
   }, []);
 
   async function submitProfile(event) {
@@ -71,7 +71,7 @@ export default function HomePage() {
       setMessage(`Saved profile for ${body.householdId}/${body.memberId}.`);
     } catch (error) {
       setStatus('error');
-      setMessage(error.message);
+      setMessage(error?.message === 'Failed to fetch' ? 'Unable to reach API. Start the API with `npm run start:api` and retry.' : error.message);
     }
   }
 
@@ -102,7 +102,7 @@ export default function HomePage() {
       setPlannerMessage(`Planner preview generated for seed ${nextSeed}.`);
     } catch (error) {
       setPlanStatus('error');
-      setPlannerMessage(error.message);
+      setPlannerMessage(error?.message === 'Failed to fetch' ? 'Unable to reach API planner endpoint. Start `npm run start:api` and retry.' : error.message);
     }
   }
 
@@ -155,7 +155,7 @@ export default function HomePage() {
       setShoppingMessage(`Generated shopping list with ${body.totalItems} items.`);
     } catch (error) {
       setShoppingStatus('error');
-      setShoppingMessage(error.message);
+      setShoppingMessage(error?.message === 'Failed to fetch' ? 'Unable to reach API shopping endpoint. Start `npm run start:api` and retry.' : error.message);
     }
   }
 
@@ -180,7 +180,7 @@ export default function HomePage() {
     <main style={{ fontFamily: 'system-ui, sans-serif', margin: '2rem', maxWidth: '760px' }}>
       <h1>WLPApp Web Scaffold</h1>
       <p>Phase 10 MVP flows are running.</p>
-      <p>API target: <code>{apiBase}</code></p>
+      <p>API target: <code>{apiBase}</code> (proxied to API service via Next.js rewrite)</p>
 
       <section>
         <h2>Profile and goal setup</h2>

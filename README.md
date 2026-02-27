@@ -76,6 +76,8 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Start local PostgreSQL (Docker): `npm run db:up`
 - Check PostgreSQL service status: `npm run db:status`
 - Start web scaffold (default `http://localhost:3000`): `npm run start:web`
+  - Web calls `/api/*` on the same origin; Next.js rewrites these to the API service (default `http://127.0.0.1:4000`).
+  - Keep `npm run start:api` running while using web flows, otherwise UI actions show a friendly API-unreachable error.
   - Optional custom port (cross-platform): `PORT=3100 npm run start:web` (PowerShell: `$env:PORT=3100; npm run start:web`, CMD: `set PORT=3100&& npm run start:web`).
   - Uses a cross-platform Node launcher (`apps/web/scripts/dev-server.js`) to avoid Windows `spawn EINVAL` issues with direct `.cmd` execution.
 - Start api scaffold (default `http://localhost:4000`): `npm run start:api`
