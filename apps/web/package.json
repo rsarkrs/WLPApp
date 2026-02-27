@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "WLPApp web scaffold",
   "scripts": {
-    "dev": "node -e \"const port=process.env.PORT || 3000; const cmd=process.platform==='win32'?'next.cmd':'next'; require('child_process').spawn(cmd,['dev','-p',String(port)],{stdio:'inherit'}).on('exit',(code)=>process.exit(code ?? 0));\"",
+    "dev": "node scripts/dev-server.js",
     "build": "next build"
   },
   "dependencies": {
