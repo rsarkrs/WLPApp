@@ -1,6 +1,6 @@
 # WLPApp Agent Skills
 
-Repository-local Codex skills for execution, QA, migration parity, and PR operations.
+Repository-local Codex skills and companion operating docs for execution, QA, migration parity, PR operations, and Codex runtime alignment.
 
 ## Why this folder exists
 The `.agents` directory provides task-specific workflows that map WLPApp conventions to Codex skill execution. Use these skills when a task matches the trigger conditions so work is faster, repeatable, and policy-compliant.
@@ -15,6 +15,8 @@ This repo's agent operating model is split across these file types:
 | Agent config (`.github/`) | Runtime automation wiring for agent checks and comments | `.github/workflows/reviewer-agent-gate.yml` |
 | Agent intake schema (`.github/`) | Structured task creation for agent lanes | `.github/ISSUE_TEMPLATE/agent-task.yml` |
 | Branch/rules policy (GitHub settings) | Required checks and approval policy enforced outside repo files | Referenced from `docs/reviewer-agent-workflow.md` |
+| Codex baseline docs (`.agents/`) | Repo-local guidance for config and rules alignment | `.agents/CODEX_CONFIG_BASELINE.md`, `.agents/CODEX_RULES_OF_ENGAGEMENT.md`, `.agents/CODEX_AGENTIC_ALIGNMENT.md` |
+| Root agent instructions | Global agent operating contract for this repo | `AGENTS.md` |
 
 If you change any workflow/rules behavior, update both the relevant config file and the matching skill/doc guidance in this folder.
 

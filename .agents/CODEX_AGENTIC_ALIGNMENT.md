@@ -28,6 +28,10 @@ This document cross-references the current WLPApp skill set against Codex agenti
 | Agent runtime config | `.github/workflows/reviewer-agent-gate.yml` | Automated mergeability/check evaluation and sticky PR feedback |
 | Agent intake config | `.github/ISSUE_TEMPLATE/agent-task.yml` | Structured issue fields (`phase`, `lane`, `definition_of_done`, etc.) |
 | Ruleset location | GitHub branch protection / rulesets (external setting) | Enforces required checks + approval policy referenced by repo docs |
+| Root AGENTS contract | `AGENTS.md` | Repository-wide instructions and execution baseline for all agent tasks |
+| Codex config baseline doc | `.agents/CODEX_CONFIG_BASELINE.md` | Repo-local defaults and parity policy for Codex runtime configuration |
+| Codex rules baseline doc | `.agents/CODEX_RULES_OF_ENGAGEMENT.md` | Explicit rules-of-engagement for deterministic, evidence-backed execution |
+| Multi-agent implementation guide | `docs/codex-multi-agent-implementation.md` | Practical role handoffs, failure triage, and maintenance protocol |
 
 ## Codex-aligned operating model for WLPApp
 
