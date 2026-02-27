@@ -1,0 +1,10 @@
+{
+  "name": "@wlpapp/api",
+  "private": true,
+  "version": "0.1.0",
+  "description": "WLPApp API scaffold",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "node -e \"console.log('apps/api build: scaffold ready')\""
+  }
+}
