@@ -301,10 +301,15 @@ test('integration: web scaffold renders Next.js landing page', async () => {
     const response = await fetchWithRetry(`http://127.0.0.1:${port}`);
     const html = await response.text();
     assert.match(html, /WLPApp Web Scaffold/);
-    assert.match(html, /Phase 10 profile and goal setup flow is running\./);
+    assert.match(html, /Phase 10 MVP flows are running\./);
     assert.match(html, /Household ID/);
     assert.match(html, /Target daily calories/);
     assert.match(html, /Save profile/);
+    assert.match(html, /Weekly planner view/);
+    assert.match(html, /Regenerate plan/);
+    assert.match(html, /Swap day 1\/day 2/);
+    assert.match(html, /Shopping list grouped view/);
+    assert.match(html, /Export shopping list/);
   } finally {
     await stopProcess(child);
   }
