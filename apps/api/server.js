@@ -1,5 +1,6 @@
 const express = require('express');
 const { computeBmrTdee } = require('../../src/domain/metabolicEngine');
+const { seedRecipes, filterRecipes, validateRecipe } = require('../../src/catalog/recipes');
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
@@ -27,10 +28,39 @@ app.get('/v1/metabolic/preview', (req, res) => {
   }
 });
 
+
+app.get('/v1/recipes', (req, res) => {
+  const invalidRecipes = seedRecipes
+    .map((recipe) => ({ recipe, validation: validateRecipe(recipe) }))
+    .filter(({ validation }) => !validation.valid)
+    .map(({ recipe, validation }) => ({ id: recipe.id, errors: validation.errors }));
+
+  if (invalidRecipes.length > 0) {
+    return res.status(500).json({
+      code: 'ERR_INVALID_RECIPE_SEED',
+      invalidRecipes
+    });
+  }
+
+  const items = filterRecipes(seedRecipes, req.query).map((recipe) => ({
+    id: recipe.id,
+    name: recipe.name,
+    cuisine: recipe.cuisine,
+    mealType: recipe.mealType,
+    macros: recipe.macros,
+    ingredients: recipe.ingredients,
+  }));
+
+  return res.status(200).json({
+    total: items.length,
+    items
+  });
+});
+
 app.get('/', (_req, res) => {
   res.status(200).json({
     name: 'WLPApp API scaffold',
-    endpoints: ['/health', '/v1/metabolic/preview']
+    endpoints: ['/health', '/v1/metabolic/preview', '/v1/recipes']
   });
 });
 
