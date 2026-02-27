@@ -19,7 +19,7 @@ const html = `<!doctype html>
   </body>
 </html>`;
 
-const server = http.createServer((req, res) => {
+const server = http.createServer((_req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
   res.end(html);
 });

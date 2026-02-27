@@ -1,23 +1,19 @@
-const http = require('node:http');
+const express = require('express');
 
+const app = express();
 const port = Number(process.env.PORT || 4000);
 
-const server = http.createServer((req, res) => {
-  if (req.url === '/health') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', service: 'wlpapp-api' }));
-    return;
-  }
-
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(
-    JSON.stringify({
-      name: 'WLPApp API scaffold',
-      endpoints: ['/health']
-    })
-  );
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok', service: 'wlpapp-api' });
 });
 
-server.listen(port, () => {
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    name: 'WLPApp API scaffold',
+    endpoints: ['/health']
+  });
+});
+
+app.listen(port, () => {
   console.log(`WLPApp API listening on http://localhost:${port}`);
 });

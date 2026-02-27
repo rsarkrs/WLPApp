@@ -58,7 +58,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 
 #### Current bootstrap status
 - Monorepo workspaces are initialized via root `package.json` workspaces (`apps/*`).
-- `apps/web` and `apps/api` now include runnable Node-based scaffolds to unblock parallel feature work.
+- `apps/web` and `apps/api` now include runnable scaffolds (Node web shell + Express API shell) to unblock parallel feature work.
 - CI-friendly root `build` script now executes workspace build scripts.
 
 #### Local startup commands (scaffold)

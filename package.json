@@ -8,13 +8,13 @@
     "apps/*"
   ],
   "scripts": {
-    "lint": "node --check src/recipeImport/pipeline.js && node --check src/recipeImport/pipeline.test.js && node --check tests/qa/metabolic-engine.test.js && node --check tests/qa/planning-shopping.integration.test.js && node --check tests/qa/api-contract.test.js && node --check tests/qa/support/metabolic-contract.js && node --check apps/api/server.js && node --check apps/web/server.js",
+    "lint": "node --check src/recipeImport/pipeline.js && node --check src/recipeImport/pipeline.test.js && node --check tests/qa/metabolic-engine.test.js && node --check tests/qa/planning-shopping.integration.test.js && node --check tests/qa/app-scaffolds.integration.test.js && node --check tests/qa/api-contract.test.js && node --check tests/qa/support/metabolic-contract.js && node --check apps/api/server.js && node --check apps/web/server.js",
     "typecheck": "node -e \"console.log('typecheck: no TypeScript sources present')\"",
     "test:unit": "node --test tests/qa/metabolic-engine.test.js src/recipeImport/pipeline.test.js",
     "test:property": "node --test tests/qa/metabolic-engine.property.test.js",
-    "test:integration": "node --test tests/qa/planning-shopping.integration.test.js",
+    "test:integration": "node --test tests/qa/planning-shopping.integration.test.js tests/qa/app-scaffolds.integration.test.js",
     "test:contract": "node --test tests/qa/api-contract.test.js",
-    "coverage:check": "node --test tests/qa/metabolic-engine.test.js tests/qa/metabolic-engine.property.test.js tests/qa/planning-shopping.integration.test.js tests/qa/api-contract.test.js src/recipeImport/pipeline.test.js",
+    "coverage:check": "node --test tests/qa/metabolic-engine.test.js tests/qa/metabolic-engine.property.test.js tests/qa/planning-shopping.integration.test.js tests/qa/app-scaffolds.integration.test.js tests/qa/api-contract.test.js src/recipeImport/pipeline.test.js",
     "build": "npm run build --workspaces --if-present",
     "start:web": "npm run dev -w apps/web",
     "start:api": "npm run dev -w apps/api"
