@@ -1,6 +1,34 @@
 const profiles = new Map();
 const planningRequests = new Map();
 
+
+const importRuns = new Map();
+const importHashIndex = new Map();
+let importCounter = 0;
+
+function nextImportRunId() {
+  importCounter += 1;
+  return `imp-${importCounter}`;
+}
+
+function saveImportRun(run) {
+  importRuns.set(run.id, run);
+  if (run.recipeHash) {
+    importHashIndex.set(run.recipeHash, run.id);
+  }
+  return run;
+}
+
+function getImportRun(id) {
+  return importRuns.get(id) || null;
+}
+
+function findImportRunByHash(recipeHash) {
+  const id = importHashIndex.get(recipeHash);
+  if (!id) return null;
+  return importRuns.get(id) || null;
+}
+
 function profileKey(householdId, memberId) {
   return `${householdId}::${memberId}`;
 }
@@ -42,4 +70,8 @@ module.exports = {
   getProfile,
   getPlanningResult,
   savePlanningResult,
+  nextImportRunId,
+  saveImportRun,
+  getImportRun,
+  findImportRunByHash,
 };

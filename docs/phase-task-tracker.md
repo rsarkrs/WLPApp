@@ -55,9 +55,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Add grouped shopping list API with pantry-aware reduction.
 
 ## Phase 8 — Recipe Import Pipeline
-- [ ] Build URL import API endpoint and import status model.
-- [ ] Add schema.org parsing and fallback extractor logic.
-- [ ] Add dedupe keying and import validation/error states.
+- [x] Build URL import API endpoint and import status model.
+- [x] Add schema.org parsing and fallback extractor logic.
+- [x] Add dedupe keying and import validation/error states.
 
 ## Phase 9 — QA Hardening
 - [ ] Extend unit/edge coverage for metabolic/planning boundaries.
