@@ -15,10 +15,10 @@ This document provides the repository-local baseline derived from Codex configur
 
 ## Repository defaults
 - Work from repo root: `/workspace/WLPApp`.
-- Validate relevant lanes before handoff:
-  - policy: `npm run ci:policy`
-  - domain: `npm run ci:domain-review`
-  - QA: `npm run ci:qa`
+- Validate relevant lanes before handoff with commands that exist in this repo:
+  - policy (branch/PR naming convention): enforced by `.github/workflows/pr-policy.yml` in PR checks
+  - domain parity: enforced by `.github/workflows/domain-review-gate.yml` in PR checks
+  - QA: run the canonical local sequence used by CI (`npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:property`, `npm run test:integration`, `npm run test:contract`, `npm run coverage:check`, `npm run build`)
 - Preserve conventional commit/PR naming required by CI gates.
 
 ## Configuration parity rule
