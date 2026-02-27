@@ -45,9 +45,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Add planner debug trace output and reproducibility tests.
 
 ## Phase 6 — API Endpoints
-- [ ] Add profile + goal management endpoints with validation.
-- [ ] Add planning endpoints and idempotency keys.
-- [ ] Add endpoint-level tests and validation error contracts.
+- [x] Add profile + goal management endpoints with validation.
+- [x] Add planning endpoints and idempotency keys.
+- [x] Add endpoint-level tests and validation error contracts.
 
 ## Phase 7 — Shopping List Consolidation
 - [ ] Aggregate duplicate ingredients across selected recipes.
