@@ -107,6 +107,7 @@ CREATE TABLE IF NOT EXISTS shopping_list_items (
   deleted_at TIMESTAMPTZ
 );
 
+-- Canonical terminology: planning_runs is the business-level planner invocation.
 CREATE TABLE IF NOT EXISTS planning_runs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   household_id UUID NOT NULL REFERENCES households(id),
@@ -136,6 +137,7 @@ BEGIN
   END IF;
 END $$;
 
+-- Canonical terminology: rule_execution_artifacts captures rule-engine-level events within a planning run.
 CREATE TABLE IF NOT EXISTS rule_execution_artifacts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   planning_run_id UUID NOT NULL REFERENCES planning_runs(id),
