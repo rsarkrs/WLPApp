@@ -42,7 +42,10 @@ jobs:
       - name: API contract tests
         run: npm run test:contract
 
-      - name: Coverage gate (core engine)
+      - name: Coverage gate (metabolic engine thresholds)
+        run: npm run coverage:engine
+
+      - name: Coverage check (full QA suite)
         run: npm run coverage:check
 
       - name: Build

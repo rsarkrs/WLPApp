@@ -25,7 +25,7 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Implement reusable metabolic engine module for BMR/TDEE, weekly cap, floors, and macro allocation.
 - [x] Wire engine into existing contract test harness.
 - [x] Expose API preview endpoint for metabolic calculation validation.
-- [ ] Enforce and document explicit coverage thresholds for engine modules.
+- [x] Enforce and document explicit coverage thresholds for engine modules.
 
 ## Phase 4 — Recipe Catalog & Filtering
 - [ ] Seed structured recipe dataset with cuisine/meal-type/macro metadata.

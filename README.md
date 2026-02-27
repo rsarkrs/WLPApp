@@ -118,6 +118,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 **Definition of Done (Template)**
 - **Required deliverables:** Rule-engine modules for BMR/TDEE, deficit cap, calorie floors, macro allocation, and typed contract interfaces.
 - **Mandatory checks:** Lint/typecheck pass; unit and edge-case tests pass; core engine coverage >= 90% line and >= 85% branch.
+- Enforcement note: `npm run coverage:engine` gates metabolic engine coverage at line >= 90% and branch >= 85%.
 - **Ownership:** Nutrition Engine area (`packages/domain-rules` and API integration adapters).
 - **Exit criteria (verifiable):**
   - Contract test vectors for each rule return deterministic outputs.
