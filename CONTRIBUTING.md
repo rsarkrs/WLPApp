@@ -46,3 +46,4 @@ Examples:
 - Reviewer Agent: automated workflow `.github/workflows/reviewer-agent-gate.yml` checks mergeability/check status and posts actionable PR feedback.
 - To enforce this gate, add `Reviewer Agent Gate / Reviewer Agent Gate` to required status checks in branch protection/rulesets.
 - Setup and operating details: `docs/reviewer-agent-workflow.md`.
+- Optional autonomous merge controller: `.github/workflows/auto-merge-controller.yml` can enable squash auto-merge once required checks pass.
