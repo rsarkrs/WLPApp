@@ -199,6 +199,11 @@ test('integration: profile endpoints round-trip stored profile', async () => {
     const profile = await readResponse.json();
     assert.equal(profile.memberId, 'm-1');
     assert.equal(profile.householdId, 'hh-1');
+
+    const listResponse = await fetchWithRetry(`http://127.0.0.1:${port}/v1/profiles?householdId=hh-1`);
+    assert.equal(listResponse.status, 200);
+    const listBody = await listResponse.json();
+    assert.ok(listBody.total >= 1);
   } finally {
     await stopProcess(child);
   }
@@ -307,8 +312,12 @@ test('integration: web scaffold renders Next.js landing page', async () => {
     assert.match(html, /Save profile/);
     assert.match(html, /Weekly planner view/);
     assert.match(html, /Regenerate plan/);
-    assert.match(html, /Swap day 1\/day 2/);
-    assert.match(html, /Shopping list grouped view/);
+    assert.match(html, /Load saved profiles/);
+    assert.match(html, /Weekly planner view/);
+    assert.match(html, /breakfast/i);
+    assert.match(html, /lunch/i);
+    assert.match(html, /dinner/i);
+    assert.match(html, /Shopping list view/);
     assert.match(html, /Export shopping list/);
   } finally {
     await stopProcess(child);

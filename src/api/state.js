@@ -1,7 +1,6 @@
 const profiles = new Map();
 const planningRequests = new Map();
 
-
 const importRuns = new Map();
 const importHashIndex = new Map();
 let importCounter = 0;
@@ -56,6 +55,15 @@ function getProfile(householdId, memberId) {
   return profiles.get(profileKey(householdId, memberId)) || null;
 }
 
+function listProfiles(householdId) {
+  const all = Array.from(profiles.values());
+  if (!householdId) {
+    return all;
+  }
+
+  return all.filter((profile) => profile.householdId === householdId);
+}
+
 function getPlanningResult(idempotencyKey) {
   return planningRequests.get(idempotencyKey) || null;
 }
@@ -68,6 +76,7 @@ function savePlanningResult(idempotencyKey, result) {
 module.exports = {
   upsertProfile,
   getProfile,
+  listProfiles,
   getPlanningResult,
   savePlanningResult,
   nextImportRunId,

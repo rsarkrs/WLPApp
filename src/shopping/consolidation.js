@@ -10,23 +10,25 @@ const unitConverters = {
   item: { baseUnit: 'item', factor: 1 },
 };
 
-function normalizeIngredient({ name, qty, unit }) {
+function normalizeIngredient({ name, qty, unit, category }) {
   const converter = unitConverters[normalizeToken(unit)];
   if (!converter) {
     return {
       name: normalizeToken(name),
       qty,
       unit: normalizeToken(unit),
+      category: normalizeToken(category) || 'other',
       normalizedQty: qty,
       normalizedUnit: normalizeToken(unit),
       normalized: false,
-    };
+    }; 
   }
 
   return {
     name: normalizeToken(name),
     qty,
     unit: normalizeToken(unit),
+    category: normalizeToken(category) || 'other',
     normalizedQty: qty * converter.factor,
     normalizedUnit: converter.baseUnit,
     normalized: true,
@@ -46,16 +48,20 @@ function consolidateShoppingList({ meals, pantryExclusions = [] }) {
       }
 
       const key = `${normalized.name}|${normalized.normalizedUnit}`;
-      totals.set(key, (totals.get(key) || 0) + normalized.normalizedQty);
+      const current = totals.get(key) || { qty: 0, category: normalized.category };
+      totals.set(key, {
+        qty: current.qty + normalized.normalizedQty,
+        category: current.category,
+      });
     }
   }
 
   return Array.from(totals.entries())
-    .map(([key, qty]) => {
+    .map(([key, data]) => {
       const [name, unit] = key.split('|');
-      return { name, unit, qty: Number(qty.toFixed(2)) };
+      return { name, unit, qty: Number(data.qty.toFixed(2)), category: data.category };
     })
-    .sort((a, b) => a.name.localeCompare(b.name) || a.unit.localeCompare(b.unit));
+    .sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name) || a.unit.localeCompare(b.unit));
 }
 
 module.exports = {

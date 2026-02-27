@@ -4,7 +4,7 @@ const { seedRecipes, filterRecipes, validateRecipe } = require('../../src/catalo
 const { buildPlanningPreview } = require('../../src/planner/engine');
 const { ingestRecipeFromUrl } = require('../../src/recipeImport/pipeline');
 const { consolidateShoppingList } = require('../../src/shopping/consolidation');
-const { upsertProfile, getProfile, getPlanningResult, savePlanningResult, nextImportRunId, saveImportRun, getImportRun, findImportRunByHash } = require('../../src/api/state');
+const { upsertProfile, getProfile, listProfiles, getPlanningResult, savePlanningResult, nextImportRunId, saveImportRun, getImportRun, findImportRunByHash } = require('../../src/api/state');
 
 const app = express();
 app.use(express.json());
@@ -144,6 +144,14 @@ app.get('/v1/imports/:id', (req, res) => {
   return res.status(200).json(run);
 });
 
+
+app.get('/v1/profiles', (req, res) => {
+  return res.status(200).json({
+    total: listProfiles(req.query.householdId).length,
+    items: listProfiles(req.query.householdId),
+  });
+});
+
 app.get('/v1/profile', (req, res) => {
   const profile = getProfile(req.query.householdId, req.query.memberId);
   if (!profile) {
@@ -224,10 +232,17 @@ app.get('/v1/shopping/preview', (req, res) => {
       pantryExclusions,
     });
 
+    const byCategory = shoppingList.reduce((acc, item) => {
+      if (!acc[item.category]) acc[item.category] = [];
+      acc[item.category].push(item);
+      return acc;
+    }, {});
+
     return res.status(200).json({
       pantryExclusions,
       totalItems: shoppingList.length,
       items: shoppingList,
+      byCategory,
     });
   } catch (error) {
     return res.status(400).json({
@@ -263,7 +278,7 @@ app.get('/v1/plans/preview', (req, res) => {
 app.get('/', (_req, res) => {
   res.status(200).json({
     name: 'WLPApp API scaffold',
-    endpoints: ['/health', '/v1/profile', '/v1/imports', '/v1/metabolic/preview', '/v1/recipes', '/v1/plans/preview', '/v1/plans/generate', '/v1/shopping/preview']
+    endpoints: ['/health', '/v1/profile', '/v1/profiles', '/v1/imports', '/v1/metabolic/preview', '/v1/recipes', '/v1/plans/preview', '/v1/plans/generate', '/v1/shopping/preview']
   });
 });
 
