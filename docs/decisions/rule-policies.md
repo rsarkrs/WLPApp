@@ -9,7 +9,7 @@ This decision log defines implementation-safe policy rules for metabolic contrac
 | RP-001 | Activity multiplier table and source authority | ✅ Approved | Nutrition Engine (Domain Rules) | 2026-03-04 |
 | RP-002 | Rounding precedence (intermediate vs final values) | ✅ Approved | Nutrition Engine (Domain Rules) | 2026-03-04 |
 | RP-003 | Age support policy and error behavior | ✅ Approved | Nutrition Engine (Domain Rules) + API Platform | 2026-03-04 |
-| RP-004 | Canonical unit system and conversion tolerances | 🟡 Pending | Nutrition Engine (Domain Rules) + Shopping/Import Domain | 2026-03-15 |
+| RP-004 | Canonical unit system and conversion tolerances | ✅ Approved | Nutrition Engine (Domain Rules) + Shopping/Import Domain | 2026-03-15 |
 
 ---
 
@@ -86,26 +86,35 @@ Adult-only support and exact error behavior are already codified in fixtures and
 
 ## RP-004 — Canonical unit system and conversion tolerances
 
-- **Status:** 🟡 Pending
+- **Status:** ✅ Approved
 - **Owner:** Nutrition Engine (Domain Rules) + Shopping/Import Domain
 - **Due date:** 2026-03-15
 
-### Proposed policy (pending approval)
+### Approved policy
 Canonical units for metabolic-core rules:
 - weight: kilograms (`kg`)
 - height: centimeters (`cm`)
 - energy: kilocalories (`kcal`)
 
-Adapter behavior (proposed):
-- Imperial/mixed inputs may be accepted only at adapter boundaries.
-- Core rule modules receive canonical units only.
-- Conversion constants and tolerance windows must be frozen in contract artifacts and covered by fixtures.
+Adapter behavior:
+- Public adapters may accept canonical metric payloads directly and may optionally accept imperial payloads when explicit unit fields are provided.
+- Core rule modules must receive canonical metric units only.
+- Conversion is adapter-only responsibility; core metabolic logic must never branch on imperial units.
 
-### Open approval items
-1. **Input acceptance scope:** canonical-only payloads vs mixed unit payloads at public API boundaries.
-2. **Conversion constants:** exact `lb→kg`, `in→cm`, and any other allowed unit constants.
-3. **Tolerance budgets:** exact assertion policy for conversion checks (e.g., strict integer output checks plus intermediate tolerance bounds).
-4. **Error behavior:** exact code/message contract for unknown or incompatible unit payloads.
+### Approved conversion constants
+- `lb_to_kg = 0.45359237`
+- `in_to_cm = 2.54`
 
-### Temporary implementation safety rule (active until RP-004 is approved)
-Treat canonical metric inputs as required for metabolic-core entry points. Reject unsupported unit-bearing payloads early and consistently.
+### Approved tolerance and assertion policy
+1. Conversions keep full floating precision through intermediate calculations.
+2. Contract output rounding policy from RP-002 applies at output boundaries.
+3. Test assertions for converted intermediate values use absolute tolerance `<= 0.0001` before final output rounding.
+4. Final public outputs must satisfy contract fixture exactness after rounding.
+
+### Approved error behavior
+- Unknown/unsupported unit label: `ERR_UNSUPPORTED_UNIT` with message `Unsupported unit for {field}.`
+- Missing required unit for non-canonical payload: `ERR_MISSING_UNIT` with message `Unit is required for {field}.`
+- Incompatible unit for field (e.g., inches for weight): `ERR_INCOMPATIBLE_UNIT` with message `Incompatible unit for {field}.`
+
+### Compatibility requirement
+These error codes/messages and constants are contract surface area and must remain stable unless changed via explicit contract version update.

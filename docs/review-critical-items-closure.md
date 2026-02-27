@@ -14,10 +14,10 @@ This document closes the three critical planning items identified in the pre-exe
 **Resolved:** Phase 2 conventions and migration SQL now both enforce and/or index the documented week-based keys and recipe filter access patterns.
 
 - Canonical schema conventions: `db/schema.models.md`.
-- Implemented migration constraints/indexes:
-  - `shopping_lists (household_id, week_start_date)` uniqueness constraint.
-  - `recipes (cuisine, meal_type)` composite index.
-  - `shopping_lists (household_id, week_start_date)` supporting index.
+- Implemented migration constraints/indexes across Phase 2 migrations:
+  - `202602260001`: `shopping_lists (household_id, week_start_date)` uniqueness constraint.
+  - `202602260002`: partial index `idx_recipes_cuisine_meal_type` on `recipes (cuisine, meal_type) WHERE deleted_at IS NULL`.
+  - `202602260002`: partial index `idx_shopping_lists_household_week` on `shopping_lists (household_id, week_start_date) WHERE deleted_at IS NULL`.
 
 ## 3) QA documentation drift vs actual tests
 
