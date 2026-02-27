@@ -1,0 +1,65 @@
+name: Domain Review Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  domain-review:
+    name: Domain Review Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate domain parity safeguards
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pull_number = context.payload.pull_request.number;
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner,
+              repo,
+              pull_number,
+              per_page: 100,
+            });
+
+            const changed = files.map((f) => f.filename);
+            const hasMigrationChange = changed.some((f) => f.startsWith('database/migrations/'));
+            const hasSchemaModelChange = changed.includes('db/schema.models.md');
+            const hasQaWorkflowChange = changed.includes('.github/workflows/qa-gates.yml');
+            const hasQaDocChange = changed.includes('docs/qa-phase.md');
+
+            const failures = [];
+            if (hasMigrationChange && !hasSchemaModelChange) {
+              failures.push('Migration SQL changed without updating canonical schema doc (`db/schema.models.md`).');
+            }
+            if (hasQaWorkflowChange && !hasQaDocChange) {
+              failures.push('QA workflow changed without corresponding QA doc update (`docs/qa-phase.md`).');
+            }
+
+            core.summary
+              .addHeading('Domain Review Gate')
+              .addRaw(`Changed files: ${changed.length}`)
+              .addEOL()
+              .addList([
+                `Migration changed: ${hasMigrationChange}`,
+                `Schema model doc changed: ${hasSchemaModelChange}`,
+                `QA workflow changed: ${hasQaWorkflowChange}`,
+                `QA doc changed: ${hasQaDocChange}`,
+              ]);
+
+            if (failures.length > 0) {
+              core.summary.addHeading('Blocking findings').addList(failures);
+              await core.summary.write();
+              core.setFailed(failures.join(' '));
+              return;
+            }
+
+            core.summary.addRaw('No blocking domain parity findings.').addEOL();
+            await core.summary.write();

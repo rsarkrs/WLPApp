@@ -7,7 +7,9 @@ description: Diagnose and resolve auto-merge controller issues for PRs, includin
 
 ## Workflow
 1. Inspect PR state and checks (`gh pr view`, `gh pr checks`).
-2. Inspect failing workflow logs (`gh run view --log-failed`).
+2. Inspect failing workflow logs with an explicit run id (non-interactive safe):
+   - Get run id: `gh pr checks <pr-number>` or `gh run list --branch <branch> --limit 5`
+   - View logs: `gh run view <run-id> --log-failed`
 3. Classify issue:
    - required checks pending/failing
    - mergeability blocked/dirty

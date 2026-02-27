@@ -1,19 +1,23 @@
 # Branch Protection Rules (GitHub Settings)
 
-This repository enforces naming conventions in CI via `.github/workflows/pr-policy.yml`.
+This repository enforces naming conventions and merge gates via CI workflows.
 
-To complete policy enforcement in GitHub, configure branch protection for `main`:
+To complete policy enforcement in GitHub, configure branch protection/ruleset for `main`:
 
-1. Go to **Settings -> Branches -> Add branch protection rule**.
-2. Set branch name pattern to `main`.
+1. Go to **Settings -> Rules -> Rulesets** (or Branch protection rule for `main`).
+2. Target default branch (`main`).
 3. Enable:
    - Require a pull request before merging
-   - Require approvals (minimum 1)
-   - Dismiss stale pull request approvals when new commits are pushed
+   - Dismiss stale approvals when new commits are pushed
    - Require status checks to pass before merging
-4. Add required status check:
+4. Required approvals:
+   - **Autonomous mode (canonical): `0` required approvals**
+5. Add required status checks:
    - `naming-convention`
-5. Optional hardening:
+   - `Dedicated QA Phase`
+   - `Reviewer Agent Gate`
+   - `Domain Review Gate`
+6. Optional hardening:
    - Require conversation resolution before merging
    - Restrict who can push to matching branches
    - Require linear history

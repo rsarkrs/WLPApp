@@ -1,0 +1,50 @@
+name: Release Train
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  release-train-summary:
+    name: Release Train Summary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build release summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'closed',
+              sort: 'updated',
+              direction: 'desc',
+              per_page: 20,
+            });
+
+            const merged = prs.filter((pr) => pr.merged_at).slice(0, 10);
+            core.summary
+              .addHeading('Release Train Summary')
+              .addRaw(`Trigger: ${context.eventName}`)
+              .addEOL()
+              .addHeading('Recently merged PRs')
+              .addList(
+                merged.length > 0
+                  ? merged.map((pr) => `#${pr.number} ${pr.title}`)
+                  : ['No merged PRs found in latest window.'],
+              )
+              .addHeading('Rollout checklist')
+              .addList([
+                'Confirm required checks remained green for merged PRs.',
+                'Confirm migration roll-forward/rollback notes exist where schema changed.',
+                'Create follow-up tasks for any deferred blockers.',
+              ]);
+            await core.summary.write();
