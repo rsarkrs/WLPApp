@@ -56,6 +56,17 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Configure PostgreSQL and local dev environment.
 - Add CI pipeline scaffold (lint, test, build).
 
+#### Current bootstrap status
+- Monorepo workspaces are initialized via root `package.json` workspaces (`apps/*`).
+- `apps/web` and `apps/api` now include runnable scaffolds (Node web shell + Express API shell) to unblock parallel feature work.
+- CI-friendly root `build` script now executes workspace build scripts.
+
+#### Local startup commands (scaffold)
+- Install dependencies (workspace-aware): `npm install`
+- Start web scaffold (default `http://localhost:3000`): `npm run start:web`
+- Start api scaffold (default `http://localhost:4000`): `npm run start:api`
+- Run aggregate build: `npm run build`
+
 
 **Definition of Done (Template)**
 - **Required deliverables:** Monorepo workspace configuration, Next.js app scaffold, Express API scaffold, local PostgreSQL setup docs/scripts, CI workflow files.
