@@ -133,6 +133,24 @@ test('integration: api scaffold exposes metabolic preview endpoint', async () =>
     await stopProcess(child);
   }
 });
+
+test('integration: recipe catalog endpoint supports filters', async () => {
+  const port = await getFreePort();
+  const { child } = await startProcess('node', ['apps/api/server.js'], 'WLPApp API listening', { env: { PORT: port } });
+
+  try {
+    const response = await fetchWithRetry(
+      `http://127.0.0.1:${port}/v1/recipes?cuisine=american&mealType=breakfast&excludeIngredient=cheese`
+    );
+    assert.equal(response.status, 200);
+
+    const body = await response.json();
+    assert.equal(body.total, 1);
+    assert.equal(body.items[0].id, 'r-oats-bowl');
+  } finally {
+    await stopProcess(child);
+  }
+});
 test('integration: web scaffold renders Next.js landing page', async () => {
   const port = await getFreePort();
   const nextBin = path.join(process.cwd(), 'node_modules', '.bin', 'next');

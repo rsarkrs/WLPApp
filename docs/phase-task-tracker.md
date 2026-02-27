@@ -28,9 +28,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Enforce and document explicit coverage thresholds for engine modules.
 
 ## Phase 4 — Recipe Catalog & Filtering
-- [ ] Seed structured recipe dataset with cuisine/meal-type/macro metadata.
-- [ ] Implement recipe filtering (cuisine, include/exclude ingredients, meal type).
-- [ ] Add recipe normalization and completeness validators.
+- [x] Seed structured recipe dataset with cuisine/meal-type/macro metadata.
+- [x] Implement recipe filtering (cuisine, include/exclude ingredients, meal type).
+- [x] Add recipe normalization and completeness validators.
 
 ## Phase 5A — Weekly Planner Algorithm Design
 - [ ] Define planner objective function and scoring weights.
