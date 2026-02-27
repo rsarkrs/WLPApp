@@ -68,6 +68,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - API scaffold now includes recipe import run endpoints (`/v1/imports`, `/v1/imports/:id`) with dedupe detection.
 - QA hardening now includes shared API payload contract validators (`src/contracts/api.js`) with contract tests against live API responses.
 - Web scaffold now includes a profile + goal setup form that posts to `/v1/profile` (configurable with `NEXT_PUBLIC_API_BASE`).
+- Web scaffold now includes a weekly planner view (`generate/regenerate/swap`) and grouped shopping list generation with JSON export.
 - CI-friendly root `build` script now executes workspace build scripts.
 
 #### Local startup commands (scaffold)

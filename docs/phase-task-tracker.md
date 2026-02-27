@@ -66,8 +66,8 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 
 ## Phase 10 — Frontend UI (MVP)
 - [x] Build profile and goal setup flow.
-- [ ] Build weekly planner view with regenerate/swap flow.
-- [ ] Build shopping list grouped view and export action.
+- [x] Build weekly planner view with regenerate/swap flow.
+- [x] Build shopping list grouped view and export action.
 
 ## Phase 11 — Dedicated QA & Release Readiness
 - [ ] Enforce pre-deploy QA gate for release candidates.
