@@ -1,0 +1,86 @@
+name: Auto Merge Controller
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  enable-auto-merge:
+    name: Enable Auto Merge When Gates Pass
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge after required checks succeed
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pull_number = context.payload.pull_request.number;
+
+            const requiredChecks = new Set([
+              'naming-convention',
+              'Dedicated QA Phase',
+              'Reviewer Agent Gate',
+            ]);
+
+            async function getPr() {
+              const { data } = await github.rest.pulls.get({ owner, repo, pull_number });
+              return data;
+            }
+
+            const pr = await getPr();
+            if (pr.base.ref !== 'main' || pr.draft || pr.state !== 'open') {
+              core.info('Skipping: not an open, ready PR targeting main.');
+              return;
+            }
+
+            async function evaluateRequiredChecks(ref) {
+              const checksResp = await github.rest.checks.listForRef({ owner, repo, ref });
+              const relevantChecks = checksResp.data.check_runs.filter((check) => requiredChecks.has(check.name));
+
+              const missingChecks = [...requiredChecks].filter((name) => !relevantChecks.some((check) => check.name === name));
+              const pendingChecks = relevantChecks.filter((check) => check.status !== 'completed');
+              const failingChecks = relevantChecks.filter((check) => check.conclusion !== 'success');
+
+              return { missingChecks, pendingChecks, failingChecks };
+            }
+
+            let gateState = await evaluateRequiredChecks(pr.head.sha);
+            for (let attempt = 0; attempt < 30; attempt += 1) {
+              if (gateState.missingChecks.length === 0 && gateState.pendingChecks.length === 0) {
+                break;
+              }
+              core.info(`Waiting for required checks (attempt ${attempt + 1}/30): missing=${gateState.missingChecks.length}, pending=${gateState.pendingChecks.length}`);
+              await new Promise((resolve) => setTimeout(resolve, 10000));
+              gateState = await evaluateRequiredChecks(pr.head.sha);
+            }
+
+            if (gateState.missingChecks.length > 0 || gateState.pendingChecks.length > 0 || gateState.failingChecks.length > 0) {
+              core.info(`Not ready for auto-merge. missing=${gateState.missingChecks.length}, pending=${gateState.pendingChecks.length}, failing=${gateState.failingChecks.length}`);
+              return;
+            }
+
+            if (pr.mergeable === false || pr.mergeable_state === 'dirty') {
+              core.info(`Not mergeable yet (mergeable=${pr.mergeable}, state=${pr.mergeable_state}).`);
+              return;
+            }
+
+            if (pr.auto_merge) {
+              core.info('Auto-merge already enabled.');
+              return;
+            }
+
+            await github.graphql(
+              `mutation($pullRequestId:ID!) {
+                enablePullRequestAutoMerge(input:{pullRequestId:$pullRequestId, mergeMethod:SQUASH}) {
+                  clientMutationId
+                }
+              }`,
+              { pullRequestId: pr.node_id },
+            );
+
+            core.info('Auto-merge enabled for PR.');
