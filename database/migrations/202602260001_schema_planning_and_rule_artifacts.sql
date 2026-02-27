@@ -165,8 +165,3 @@ BEGIN
   END IF;
 END $$;
 
-CREATE INDEX IF NOT EXISTS idx_recipes_cuisine_meal_type
-  ON recipes (cuisine, meal_type);
-
-CREATE INDEX IF NOT EXISTS idx_shopping_lists_household_week
-  ON shopping_lists (household_id, week_start_date);
