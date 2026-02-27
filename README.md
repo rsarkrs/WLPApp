@@ -10,6 +10,8 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 
 ## Revised Delivery Plan
 
+> Execution tracker: see [`docs/phase-task-tracker.md`](docs/phase-task-tracker.md) for cross-off task status by phase.
+
 ### Phase 0: Domain Model & Rules Contract (Pre-DB)
 - Publish a canonical contract package (types + validation + examples) that must be imported by all downstream services before schema/migration work starts.
 - Define canonical entities/relationships via the schema source-of-truth: [`db/schema.models.md`](db/schema.models.md).

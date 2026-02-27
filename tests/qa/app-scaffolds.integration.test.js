@@ -115,6 +115,24 @@ test('integration: api scaffold responds on /health', async () => {
   }
 });
 
+
+
+test('integration: api scaffold exposes metabolic preview endpoint', async () => {
+  const port = await getFreePort();
+  const { child } = await startProcess('node', ['apps/api/server.js'], 'WLPApp API listening', { env: { PORT: port } });
+
+  try {
+    const response = await fetchWithRetry(
+      `http://127.0.0.1:${port}/v1/metabolic/preview?sex=female&ageYears=30&heightCm=165&weightKg=70&activityLevel=moderate`
+    );
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.bmrKcal, 1420);
+    assert.equal(body.tdeeKcal, 2201);
+  } finally {
+    await stopProcess(child);
+  }
+});
 test('integration: web scaffold renders Next.js landing page', async () => {
   const port = await getFreePort();
   const nextBin = path.join(process.cwd(), 'node_modules', '.bin', 'next');
