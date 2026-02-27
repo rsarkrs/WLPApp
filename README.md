@@ -76,6 +76,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Start local PostgreSQL (Docker): `npm run db:up`
 - Check PostgreSQL service status: `npm run db:status`
 - Start web scaffold (default `http://localhost:3000`): `npm run start:web`
+  - Optional custom port (cross-platform): `PORT=3100 npm run start:web` (PowerShell: `$env:PORT=3100; npm run start:web`, CMD: `set PORT=3100&& npm run start:web`).
 - Start api scaffold (default `http://localhost:4000`): `npm run start:api`
 - Run aggregate build: `npm run build`
 - Stop local services (including DB): `npm run db:down`
