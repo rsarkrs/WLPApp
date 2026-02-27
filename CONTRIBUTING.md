@@ -40,3 +40,9 @@ Examples:
 - `scripts/create_pr.sh`: validates naming policy, auto-renames non-compliant local branch names to `Chore/<sanitized-name>`, ensures the PR base tracking ref is fetched locally, pushes branch, and creates a PR via `gh` or GitHub API fallback.
 - Recommended workflow: create commits first, then run `scripts/create_pr.sh` to enforce branch/PR naming policy before opening a PR.
 - Required env for API fallback: `GITHUB_TOKEN` (or `GH_TOKEN`).
+
+## Two-Agent PR Workflow
+- Builder Agent: implements code and opens/updates PRs.
+- Reviewer Agent: automated workflow `.github/workflows/reviewer-agent-gate.yml` checks mergeability/check status and posts actionable PR feedback.
+- To enforce this gate, add `Reviewer Agent Gate / Reviewer Agent Gate` to required status checks in branch protection/rulesets.
+- Setup and operating details: `docs/reviewer-agent-workflow.md`.

@@ -1,0 +1,102 @@
+name: Reviewer Agent Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  reviewer-agent:
+    name: Reviewer Agent Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Evaluate PR mergeability and checks
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pull_number = context.payload.pull_request.number;
+
+            async function getPullWithMergeability() {
+              for (let attempt = 0; attempt < 6; attempt += 1) {
+                const { data } = await github.rest.pulls.get({ owner, repo, pull_number });
+                if (data.mergeable !== null) return data;
+                await new Promise((resolve) => setTimeout(resolve, 2000));
+              }
+              const { data } = await github.rest.pulls.get({ owner, repo, pull_number });
+              return data;
+            }
+
+            const pr = await getPullWithMergeability();
+            const headSha = pr.head.sha;
+
+            const combinedStatus = await github.rest.repos.getCombinedStatusForRef({ owner, repo, ref: headSha });
+            const checks = await github.rest.checks.listForRef({ owner, repo, ref: headSha });
+
+            const failingStatuses = combinedStatus.data.statuses.filter((s) => s.state !== 'success');
+            const failingChecks = checks.data.check_runs.filter((c) => c.conclusion && c.conclusion !== 'success' && c.conclusion !== 'neutral' && c.conclusion !== 'skipped');
+            const pendingChecks = checks.data.check_runs.filter((c) => c.status !== 'completed');
+
+            const mergeBlocked = pr.mergeable === false || ['dirty', 'blocked'].includes(pr.mergeable_state);
+
+            const summaryLines = [
+              '## Reviewer Agent Gate',
+              '',
+              `- Mergeable: ${pr.mergeable}`,
+              `- Mergeable state: ${pr.mergeable_state}`,
+              `- Changed files: ${pr.changed_files}`,
+              `- Commits: ${pr.commits}`,
+              `- Non-success commit statuses: ${failingStatuses.length}`,
+              `- Failing check runs: ${failingChecks.length}`,
+              `- Pending check runs: ${pendingChecks.length}`,
+              '',
+              '### Gate decision',
+            ];
+
+            if (mergeBlocked || failingStatuses.length > 0 || failingChecks.length > 0) {
+              summaryLines.push('- ❌ Blocked. Resolve merge conflicts and/or failing checks before merge.');
+            } else if (pendingChecks.length > 0 || pr.mergeable === null || pr.mergeable_state === 'unknown') {
+              summaryLines.push('- ⚠️ Waiting on mergeability/check computation. Re-run or wait for checks to complete.');
+            } else {
+              summaryLines.push('- ✅ Ready from reviewer-agent perspective (human approval still required by policy).');
+            }
+
+            if (failingChecks.length > 0) {
+              summaryLines.push('', '### Failing check runs');
+              for (const check of failingChecks.slice(0, 10)) {
+                summaryLines.push(`- ${check.name}: ${check.conclusion} (${check.html_url})`);
+              }
+            }
+
+            if (failingStatuses.length > 0) {
+              summaryLines.push('', '### Non-success commit statuses');
+              for (const status of failingStatuses.slice(0, 10)) {
+                summaryLines.push(`- ${status.context}: ${status.state} (${status.target_url || 'no URL'})`);
+              }
+            }
+
+            const body = `<!-- reviewer-agent-gate -->\n${summaryLines.join('\n')}`;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number: pull_number,
+              per_page: 100,
+            });
+
+            const existing = comments.find((comment) => comment.user?.login === 'github-actions[bot]' && comment.body?.includes('<!-- reviewer-agent-gate -->'));
+
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number: pull_number, body });
+            }
+
+            if (mergeBlocked || failingStatuses.length > 0 || failingChecks.length > 0) {
+              core.setFailed('Reviewer agent gate is blocked. See PR comment for details.');
+            }
