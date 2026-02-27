@@ -45,7 +45,7 @@ jobs:
             const failingChecks = checks.data.check_runs.filter((c) => c.conclusion && c.conclusion !== 'success' && c.conclusion !== 'neutral' && c.conclusion !== 'skipped');
             const pendingChecks = checks.data.check_runs.filter((c) => c.status !== 'completed');
 
-            const mergeBlocked = pr.mergeable === false || ['dirty', 'blocked'].includes(pr.mergeable_state);
+            const mergeBlocked = pr.mergeable === false || ['dirty'].includes(pr.mergeable_state);
 
             const summaryLines = [
               '## Reviewer Agent Gate',
@@ -63,8 +63,8 @@ jobs:
 
             if (mergeBlocked || failingStatuses.length > 0 || failingChecks.length > 0) {
               summaryLines.push('- ❌ Blocked. Resolve merge conflicts and/or failing checks before merge.');
-            } else if (pendingChecks.length > 0 || pr.mergeable === null || pr.mergeable_state === 'unknown') {
-              summaryLines.push('- ⚠️ Waiting on mergeability/check computation. Re-run or wait for checks to complete.');
+            } else if (pendingChecks.length > 0 || pr.mergeable === null || pr.mergeable_state === 'unknown' || pr.mergeable_state === 'blocked') {
+              summaryLines.push('- ⚠️ Waiting on mergeability/check computation or required approvals/checks.');
             } else {
               summaryLines.push('- ✅ Ready from reviewer-agent perspective (human approval still required by policy).');
             }
