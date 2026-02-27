@@ -38,15 +38,29 @@ jobs:
               return;
             }
 
-            const checksResp = await github.rest.checks.listForRef({ owner, repo, ref: pr.head.sha });
-            const relevantChecks = checksResp.data.check_runs.filter((check) => requiredChecks.has(check.name));
+            async function evaluateRequiredChecks(ref) {
+              const checksResp = await github.rest.checks.listForRef({ owner, repo, ref });
+              const relevantChecks = checksResp.data.check_runs.filter((check) => requiredChecks.has(check.name));
 
-            const missingChecks = [...requiredChecks].filter((name) => !relevantChecks.some((check) => check.name === name));
-            const pendingChecks = relevantChecks.filter((check) => check.status !== 'completed');
-            const failingChecks = relevantChecks.filter((check) => check.conclusion !== 'success');
+              const missingChecks = [...requiredChecks].filter((name) => !relevantChecks.some((check) => check.name === name));
+              const pendingChecks = relevantChecks.filter((check) => check.status !== 'completed');
+              const failingChecks = relevantChecks.filter((check) => check.conclusion !== 'success');
 
-            if (missingChecks.length > 0 || pendingChecks.length > 0 || failingChecks.length > 0) {
-              core.info(`Not ready for auto-merge. missing=${missingChecks.length}, pending=${pendingChecks.length}, failing=${failingChecks.length}`);
+              return { missingChecks, pendingChecks, failingChecks };
+            }
+
+            let gateState = await evaluateRequiredChecks(pr.head.sha);
+            for (let attempt = 0; attempt < 30; attempt += 1) {
+              if (gateState.missingChecks.length === 0 && gateState.pendingChecks.length === 0) {
+                break;
+              }
+              core.info(`Waiting for required checks (attempt ${attempt + 1}/30): missing=${gateState.missingChecks.length}, pending=${gateState.pendingChecks.length}`);
+              await new Promise((resolve) => setTimeout(resolve, 10000));
+              gateState = await evaluateRequiredChecks(pr.head.sha);
+            }
+
+            if (gateState.missingChecks.length > 0 || gateState.pendingChecks.length > 0 || gateState.failingChecks.length > 0) {
+              core.info(`Not ready for auto-merge. missing=${gateState.missingChecks.length}, pending=${gateState.pendingChecks.length}, failing=${gateState.failingChecks.length}`);
               return;
             }
 
