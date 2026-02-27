@@ -24,9 +24,14 @@ This model set extends the Phase 2 schema-design task with planning artifacts, h
 - `shopping_lists`
 - `shopping_list_items`
 
-## Rule-execution artifacts
-- `rule_execution_runs`
-- `rule_execution_events`
+## Planning and rule-engine entities
+- `planning_runs` (business-level planner invocation for a household/week)
+- `rule_execution_artifacts` (rule-engine-level events emitted within a planning run)
+
+## Terminology rationale (canonical)
+- We use **`planning_runs`** for the top-level business process: a user/system-triggered weekly plan generation attempt.
+- We use **`rule_execution_artifacts`** for lower-level rule-engine outputs (constraint checks, fallbacks, rejections, scoring details) produced during a planning run.
+- This separation keeps future migrations explicit about intent: business run lifecycle changes belong to `planning_runs`, while rule trace detail evolution belongs to `rule_execution_artifacts`.
 
 ## Design conventions
 - Soft delete on core records via `deleted_at`.

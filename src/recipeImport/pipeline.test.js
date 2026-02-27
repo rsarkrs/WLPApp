@@ -1,6 +1,6 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import {
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const {
   buildDedupeKeys,
   canonicalizeUrl,
   fallbackExtractor,
@@ -8,7 +8,7 @@ import {
   normalizeIngredients,
   parseSchemaOrgRecipe,
   validateRecipe,
-} from './pipeline.js';
+} = require('./pipeline.js');
 
 test('canonicalizeUrl strips tracking params and fragment', () => {
   const canonical = canonicalizeUrl('HTTPS://Example.com/recipe/?utm_source=x&id=1#section');

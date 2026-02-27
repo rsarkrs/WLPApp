@@ -1,0 +1,17 @@
+{
+  "name": "wlpapp",
+  "private": true,
+  "version": "0.1.0",
+  "description": "WLPApp QA workflow scripts",
+  "license": "UNLICENSED",
+  "scripts": {
+    "lint": "node --check src/recipeImport/pipeline.js && node --check src/recipeImport/pipeline.test.js && node --check tests/qa/metabolic-engine.test.js && node --check tests/qa/planning-shopping.integration.test.js && node --check tests/qa/api-contract.test.js && node --check tests/qa/support/metabolic-contract.js",
+    "typecheck": "node -e \"console.log('typecheck: no TypeScript sources present')\"",
+    "test:unit": "node --test tests/qa/metabolic-engine.test.js src/recipeImport/pipeline.test.js",
+    "test:property": "node --test tests/qa/metabolic-engine.property.test.js",
+    "test:integration": "node --test tests/qa/planning-shopping.integration.test.js",
+    "test:contract": "node --test tests/qa/api-contract.test.js",
+    "coverage:check": "node --test tests/qa/metabolic-engine.test.js tests/qa/metabolic-engine.property.test.js tests/qa/planning-shopping.integration.test.js tests/qa/api-contract.test.js src/recipeImport/pipeline.test.js",
+    "build": "node -e \"console.log('build: no compilation required for current repository state')\""
+  }
+}
