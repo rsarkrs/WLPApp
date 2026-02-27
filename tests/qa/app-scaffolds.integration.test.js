@@ -170,6 +170,78 @@ test('integration: planner preview endpoint is deterministic with same seed', as
     await stopProcess(child);
   }
 });
+
+test('integration: profile endpoints round-trip stored profile', async () => {
+  const port = await getFreePort();
+  const { child } = await startProcess('node', ['apps/api/server.js'], 'WLPApp API listening', { env: { PORT: port } });
+
+  try {
+    const createResponse = await fetch(`http://127.0.0.1:${port}/v1/profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        householdId: 'hh-1',
+        memberId: 'm-1',
+        sex: 'female',
+        ageYears: 30,
+        heightCm: 165,
+        weightKg: 70,
+        activityLevel: 'moderate',
+        targetDailyCalories: 1800,
+        requestedWeeklyLossKg: 0.4,
+      }),
+    });
+
+    assert.equal(createResponse.status, 200);
+
+    const readResponse = await fetchWithRetry(`http://127.0.0.1:${port}/v1/profile?householdId=hh-1&memberId=m-1`);
+    assert.equal(readResponse.status, 200);
+    const profile = await readResponse.json();
+    assert.equal(profile.memberId, 'm-1');
+    assert.equal(profile.householdId, 'hh-1');
+  } finally {
+    await stopProcess(child);
+  }
+});
+
+test('integration: plans/generate honors idempotency key', async () => {
+  const port = await getFreePort();
+  const { child } = await startProcess('node', ['apps/api/server.js'], 'WLPApp API listening', { env: { PORT: port } });
+
+  try {
+    const payload = {
+      idempotencyKey: 'idem-123',
+      seed: 9,
+      mealType: 'breakfast',
+      cuisine: 'american',
+      sex: 'female',
+      dailyCalories: 1700,
+      weightKg: 70,
+      requestedWeeklyLossKg: 0.5,
+    };
+
+    const first = await fetch(`http://127.0.0.1:${port}/v1/plans/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    assert.equal(first.status, 200);
+    const firstBody = await first.json();
+    assert.equal(firstBody.idempotentReplay, false);
+
+    const second = await fetch(`http://127.0.0.1:${port}/v1/plans/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    assert.equal(second.status, 200);
+    const secondBody = await second.json();
+    assert.equal(secondBody.idempotentReplay, true);
+    assert.deepEqual(secondBody.result.plan.meals, firstBody.result.plan.meals);
+  } finally {
+    await stopProcess(child);
+  }
+});
 test('integration: web scaffold renders Next.js landing page', async () => {
   const port = await getFreePort();
   const nextBin = path.join(process.cwd(), 'node_modules', '.bin', 'next');

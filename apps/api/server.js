@@ -2,8 +2,10 @@ const express = require('express');
 const { computeBmrTdee } = require('../../src/domain/metabolicEngine');
 const { seedRecipes, filterRecipes, validateRecipe } = require('../../src/catalog/recipes');
 const { buildPlanningPreview } = require('../../src/planner/engine');
+const { upsertProfile, getProfile, getPlanningResult, savePlanningResult } = require('../../src/api/state');
 
 const app = express();
+app.use(express.json());
 const port = Number(process.env.PORT || 4000);
 
 app.get('/health', (_req, res) => {
@@ -59,6 +61,74 @@ app.get('/v1/recipes', (req, res) => {
 });
 
 
+
+app.post('/v1/profile', (req, res) => {
+  const payload = req.body || {};
+  if (!payload.householdId || !payload.memberId || !payload.sex) {
+    return res.status(400).json({
+      code: 'ERR_INVALID_PROFILE',
+      message: 'householdId, memberId, and sex are required.',
+    });
+  }
+
+  const profile = upsertProfile(payload);
+  return res.status(200).json(profile);
+});
+
+app.get('/v1/profile', (req, res) => {
+  const profile = getProfile(req.query.householdId, req.query.memberId);
+  if (!profile) {
+    return res.status(404).json({
+      code: 'ERR_PROFILE_NOT_FOUND',
+      message: 'Profile not found for provided household/member.',
+    });
+  }
+
+  return res.status(200).json(profile);
+});
+
+app.post('/v1/plans/generate', (req, res) => {
+  const payload = req.body || {};
+
+  if (!payload.idempotencyKey) {
+    return res.status(400).json({
+      code: 'ERR_MISSING_IDEMPOTENCY_KEY',
+      message: 'idempotencyKey is required.',
+    });
+  }
+
+  const existing = getPlanningResult(payload.idempotencyKey);
+  if (existing) {
+    return res.status(200).json({ ...existing, idempotentReplay: true });
+  }
+
+  try {
+    const result = buildPlanningPreview({
+      recipes: seedRecipes,
+      seed: Number(payload.seed || 0),
+      days: Number(payload.days || 7),
+      mealType: payload.mealType,
+      cuisine: payload.cuisine,
+      sex: payload.sex || 'female',
+      dailyCalories: Number(payload.dailyCalories || 1800),
+      weightKg: Number(payload.weightKg || 70),
+      requestedWeeklyLossKg: Number(payload.requestedWeeklyLossKg || 0.4),
+    });
+
+    const saved = savePlanningResult(payload.idempotencyKey, {
+      idempotentReplay: false,
+      result,
+    });
+
+    return res.status(200).json(saved);
+  } catch (error) {
+    return res.status(400).json({
+      code: error.code || 'ERR_INVALID_REQUEST',
+      message: error.message,
+    });
+  }
+});
+
 app.get('/v1/plans/preview', (req, res) => {
   try {
     const result = buildPlanningPreview({
@@ -85,7 +155,7 @@ app.get('/v1/plans/preview', (req, res) => {
 app.get('/', (_req, res) => {
   res.status(200).json({
     name: 'WLPApp API scaffold',
-    endpoints: ['/health', '/v1/metabolic/preview', '/v1/recipes', '/v1/plans/preview']
+    endpoints: ['/health', '/v1/profile', '/v1/metabolic/preview', '/v1/recipes', '/v1/plans/preview', '/v1/plans/generate']
   });
 });
 
