@@ -156,6 +156,33 @@ test('integration: readiness endpoint returns dependency health details', async 
   }
 });
 
+test('integration: metrics endpoint reports request counters and route stats', async () => {
+  const port = await getFreePort();
+  const { child } = await startProcess('node', ['apps/api/server.js'], 'WLPApp API listening', { env: { PORT: port } });
+
+  try {
+    await fetchWithRetry(`http://127.0.0.1:${port}/health`);
+    await fetchWithRetry(`http://127.0.0.1:${port}/health/live`);
+
+    // Fetch twice because metrics middleware records counters on response finish,
+    // so the first /metrics response may not yet include its own request.
+    const firstMetricsResponse = await fetchWithRetry(`http://127.0.0.1:${port}/metrics`);
+    assert.equal(firstMetricsResponse.status, 200);
+
+    const metricsResponse = await fetchWithRetry(`http://127.0.0.1:${port}/metrics`);
+    assert.equal(metricsResponse.status, 200);
+
+    const body = await metricsResponse.json();
+    assert.equal(body.service, 'wlpapp-api');
+    assert.ok(body.requestsTotal >= 3);
+    assert.ok(body.byPath['GET /health']);
+    assert.ok(body.byPath['GET /health/live']);
+    assert.ok(body.byPath['GET /metrics']);
+  } finally {
+    await stopProcess(child);
+  }
+});
+
 
 
 test('integration: api scaffold exposes metabolic preview endpoint', async () => {
