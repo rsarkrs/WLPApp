@@ -22,7 +22,8 @@
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
     "db:status": "docker compose ps postgres",
-    "coverage:engine": "rm -rf coverage && c8 --reporter=json-summary --all --include=src/domain/metabolicEngine.js node --test tests/qa/metabolic-engine.test.js tests/qa/metabolic-engine.property.test.js && node scripts/check_engine_coverage.js"
+    "coverage:engine": "rm -rf coverage && c8 --reporter=json-summary --all --include=src/domain/metabolicEngine.js node --test tests/qa/metabolic-engine.test.js tests/qa/metabolic-engine.property.test.js && node scripts/check_engine_coverage.js",
+    "qa:release": "npm run lint && npm run test:unit && npm run test:property && npm run test:integration && npm run test:contract && npm run coverage:engine && npm run coverage:check && npm run build && node scripts/generate_release_readiness.js"
   },
   "devDependencies": {
     "c8": "^10.1.2"

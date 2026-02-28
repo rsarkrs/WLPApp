@@ -85,9 +85,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Update Recipes Used to a unique recipe selector with ingredient quantities and step-by-step instructions.
 
 ## Phase 11 — Dedicated QA & Release Readiness
-- [ ] Enforce pre-deploy QA gate for release candidates.
+- [x] Enforce pre-deploy QA gate for release candidates.
 - [ ] Validate coverage thresholds for core engine modules.
-- [ ] Capture test evidence and release readiness checklist artifacts.
+- [x] Capture test evidence and release readiness checklist artifacts.
 
 ## Phase 12 — Production Readiness & Deployment
 - [ ] Add structured logging and request correlation IDs.
