@@ -1,0 +1,26 @@
+name: Deploy Production Baseline
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-production:
+    name: Deploy Production (baseline)
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate required production secrets
+        env:
+          POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+          POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+          NEXT_PUBLIC_API_BASE: ${{ secrets.NEXT_PUBLIC_API_BASE }}
+        run: |
+          test -n "$POSTGRES_HOST" || (echo "Missing POSTGRES_HOST" && exit 1)
+          test -n "$POSTGRES_PORT" || (echo "Missing POSTGRES_PORT" && exit 1)
+          test -n "$NEXT_PUBLIC_API_BASE" || (echo "Missing NEXT_PUBLIC_API_BASE" && exit 1)
+
+      - name: Deployment placeholder
+        run: echo "Replace baseline step with platform deployment commands (Render/Railway/Vercel)."

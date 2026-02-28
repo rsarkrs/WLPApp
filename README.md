@@ -2,6 +2,59 @@
 
 Constraint-based meal planning application focused on metabolic safety, macro adherence, household scaling, and unified shopping output.
 
+
+## Quick Start: Run and Test the App
+
+### 1) Install dependencies
+```bash
+npm install
+```
+
+### 2) Start the API
+```bash
+npm run start:api
+```
+- API runs on `http://127.0.0.1:4000` by default.
+- Health checks:
+  - `GET /health`
+  - `GET /health/live`
+  - `GET /health/ready`
+  - `GET /metrics`
+
+### 3) Start the Web app (in another terminal)
+```bash
+npm run start:web
+```
+- Web runs on `http://127.0.0.1:3000` by default.
+- The web app proxies `/api/*` requests to the API service.
+
+### 4) Run the full test suite
+```bash
+npm run lint
+npm run test:unit
+npm run test:property
+npm run test:integration
+npm run test:contract
+```
+
+### 5) Run coverage gates
+```bash
+npm run coverage:engine
+npm run coverage:check
+```
+
+### 6) Run release-readiness checks
+```bash
+npm run qa:release
+```
+- Generates: `artifacts/release-readiness-checklist.md`.
+
+### 7) Run mobile Lighthouse quality gate locally
+```bash
+npm run qa:mobile
+```
+- Uses `.lighthouserc.json` and checks PWA/performance thresholds used by CI.
+
 ## Schema Source of Truth
 
 - The canonical schema spec is [`db/schema.models.md`](db/schema.models.md). All entity names, relationships, and naming updates must be made there first.
@@ -9,6 +62,8 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - `README.md` should summarize schema intent and link to the canonical doc, not duplicate full model definitions.
 
 ## Revised Delivery Plan
+
+> Execution tracker: see [`docs/phase-task-tracker.md`](docs/phase-task-tracker.md) for cross-off task status by phase.
 
 ### Phase 0: Domain Model & Rules Contract (Pre-DB)
 - Publish a canonical contract package (types + validation + examples) that must be imported by all downstream services before schema/migration work starts.
@@ -56,6 +111,46 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Configure PostgreSQL and local dev environment.
 - Add CI pipeline scaffold (lint, test, build).
 
+#### Current bootstrap status
+- Monorepo workspaces are initialized via root `package.json` workspaces (`apps/*`).
+- `apps/web` and `apps/api` now include runnable scaffolds (Next.js web shell + Express API shell) to unblock parallel feature work.
+- API scaffold now includes recipe catalog filtering preview endpoint (`/v1/recipes`) with cuisine/meal-type/include/exclude ingredient filtering.
+- Planner preview endpoint available at `/v1/plans/preview` for deterministic seeded plan debugging and safety preview.
+- API scaffold now includes profile and idempotent planning endpoints (`/v1/profile`, `/v1/plans/generate`).
+- API scaffold now includes shopping consolidation preview endpoint (`/v1/shopping/preview`) with pantry exclusion support.
+- API scaffold now includes recipe import run endpoints (`/v1/imports`, `/v1/imports/:id`) with dedupe detection.
+- API scaffold now includes health probes (`/health/live`, `/health/ready`) plus `x-request-id` correlation headers and structured request logs.
+- API scaffold now includes `/metrics` for service counters/route stats used by Phase 12 alerting baselines.
+- Production baseline files added: `.env.production.example`, `.github/workflows/deploy-production.yml`, and `docs/operations/production-runbook.md`.
+- Web scaffold now includes a baseline PWA setup (manifest + service worker + mobile app meta tags) and Android readiness guidance at `docs/mobile/android-readiness.md`.
+- Android execution docs now include an emulator testing guide and Play submission runbook (`docs/mobile/android-studio-testing.md`, `docs/mobile/play-store-submission-runbook.md`) plus an Android signing baseline workflow (`.github/workflows/android-release-baseline.yml`).
+- Android TWA shell bootstrap automation is now available via `npm run android:twa:init` (see `docs/mobile/twa-bootstrap.md`).
+- Compliance baseline now includes repository-tracked privacy/Data Safety docs and a CI compliance-doc gate (`docs/compliance/privacy-policy.md`, `docs/compliance/play-store-data-safety-checklist.md`, `.github/workflows/compliance-doc-gate.yml`).
+- QA hardening now includes shared API payload contract validators (`src/contracts/api.js`) with contract tests against live API responses.
+- Web scaffold now keeps profile/planner state in browser localStorage (local-only persistence; no hosted profile storage required).
+- Web scaffold now includes tabbed Profile/Planner/Recipes/Shopping sections, two-member profile setup with optional second-person toggle, unit-aware weekly-loss input, multi-select cuisine preferences, ingredient exclusion multi-select from meal-bank ingredients, member-ID planner toggle with per-member scaled macros in planner cards, calibrated per-member meal scaling to keep weekly average calories within ±50 of target when possible, a unique recipe picker with quantities + instructions, a 7-day drag-and-drop planner with meal bank swaps, and categorized shopping totals shown in table format with JSON export.
+- CI-friendly root `build` script now executes workspace build scripts.
+
+#### Local startup commands (scaffold)
+- Install dependencies (workspace-aware): `npm install`
+- Start local PostgreSQL (Docker): `npm run db:up`
+- Check PostgreSQL service status: `npm run db:status`
+- Start web scaffold (default `http://localhost:3000`): `npm run start:web`
+  - Web calls `/api/*` on the same origin; Next.js rewrites these to the API service (default `http://127.0.0.1:4000`).
+  - Keep `npm run start:api` running while using web flows, otherwise UI actions show a friendly API-unreachable error.
+  - Optional custom port (cross-platform): `PORT=3100 npm run start:web` (PowerShell: `$env:PORT=3100; npm run start:web`, CMD: `set PORT=3100&& npm run start:web`).
+  - Uses a cross-platform Node launcher (`apps/web/scripts/dev-server.js`) to avoid Windows `spawn EINVAL` issues with direct `.cmd` execution.
+- Start api scaffold (default `http://localhost:4000`): `npm run start:api`
+- Run aggregate build: `npm run build`
+- Stop local services (including DB): `npm run db:down`
+
+#### Local database defaults
+- Host: `localhost`
+- Port: `5432`
+- Database: `wlpapp`
+- Username: `wlpapp`
+- Password: `wlpapp`
+
 
 **Definition of Done (Template)**
 - **Required deliverables:** Monorepo workspace configuration, Next.js app scaffold, Express API scaffold, local PostgreSQL setup docs/scripts, CI workflow files.
@@ -95,6 +190,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 **Definition of Done (Template)**
 - **Required deliverables:** Rule-engine modules for BMR/TDEE, deficit cap, calorie floors, macro allocation, and typed contract interfaces.
 - **Mandatory checks:** Lint/typecheck pass; unit and edge-case tests pass; core engine coverage >= 90% line and >= 85% branch.
+- Enforcement note: `npm run coverage:engine` gates metabolic engine coverage at line >= 90% and branch >= 85%.
 - **Ownership:** Nutrition Engine area (`packages/domain-rules` and API integration adapters).
 - **Exit criteria (verifiable):**
   - Contract test vectors for each rule return deterministic outputs.
@@ -117,6 +213,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
   - Ingredient units and quantities pass normalization validation for all seeded recipes.
 
 ### Phase 5A: Weekly Planner Algorithm Design
+- Design artifact: [`docs/planner/algorithm-design.md`](docs/planner/algorithm-design.md).
 - Define planner objective function and scoring weights:
   - Macro target fit score
   - Ingredient overlap score
@@ -232,6 +329,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Add integration tests for weekly plan generation and shopping-list aggregation behavior.
 - Add API contract tests validating frontend/backend request-response compatibility.
 - Enforce CI coverage thresholds for core engine modules before deployment.
+- Run `npm run qa:release` before a release candidate to execute the QA bundle and generate `artifacts/release-readiness-checklist.md`.
 
 ### Phase 12: Production Readiness & Deployment
 - Add structured logging with request correlation IDs propagated across API, planner jobs, and import workers.

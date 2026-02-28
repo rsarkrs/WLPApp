@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="WLPApp icon">
+  <rect width="512" height="512" rx="96" fill="#2563eb"/>
+  <path d="M128 320c48-6 72-28 88-70 16 42 40 64 88 70-48 6-72 28-88 70-16-42-40-64-88-70z" fill="#fff"/>
+  <circle cx="256" cy="170" r="48" fill="#bfdbfe"/>
+</svg>

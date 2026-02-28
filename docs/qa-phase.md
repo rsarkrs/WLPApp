@@ -13,9 +13,9 @@ The QA phase is mandatory for release branches and pull requests targeting `main
 | --- | --- | --- | --- |
 | Unit tests (metabolic + macro engine) | `tests/qa/metabolic-engine.test.js` | Implemented | Use as the current unit gate target until engine modules are split into dedicated packages. |
 | Property + edge tests | `tests/qa/metabolic-engine.property.test.js`, `tests/qa/metabolic-engine.test.js` | Implemented | Current property coverage exists in a dedicated property test file; consider adding fuzz/stochastic extensions in monorepo split. |
-| Integration tests | `tests/qa/planning-shopping.integration.test.js` | Implemented | Current integration gate path. |
+| Integration tests | `tests/qa/planning-shopping.integration.test.js`, `tests/qa/app-scaffolds.integration.test.js` | Implemented | Covers planning/shopping plus scaffold/API integration surfaces. |
 | API contract tests | `tests/qa/api-contract.test.js`, `tests/qa/support/metabolic-contract.js`, `tests/fixtures/metabolic-contract-fixtures.json` | Implemented | Treat fixtures + shared contract helper as part of contract gate inputs. |
-| Coverage gate paths | Planned: `core/metabolic/**`, `core/planning/**`, `core/shopping/**` | **Not yet implemented** | These module paths do not exist yet in this repo layout; keep as planned targets for monorepo transition. |
+| Coverage gate paths | `src/domain/metabolicEngine.js`, `src/planner/engine.js`, `src/shopping/consolidation.js` via `npm run coverage:engine` | Implemented | Enforced in CI with per-module thresholds before full-suite coverage check. |
 
 ### Layer-to-Test File Coverage
 
@@ -23,7 +23,7 @@ The QA phase is mandatory for release branches and pull requests targeting `main
 | --- | --- |
 | Unit | `tests/qa/metabolic-engine.test.js` |
 | Property / edge | `tests/qa/metabolic-engine.property.test.js`, `tests/qa/metabolic-engine.test.js` |
-| Integration | `tests/qa/planning-shopping.integration.test.js` |
+| Integration | `tests/qa/planning-shopping.integration.test.js`, `tests/qa/app-scaffolds.integration.test.js` |
 | Contract | `tests/qa/api-contract.test.js`, `tests/qa/support/metabolic-contract.js`, `tests/fixtures/metabolic-contract-fixtures.json` |
 
 ### Monorepo Transition Note (Path Renames Expected)
@@ -31,7 +31,7 @@ The QA phase is mandatory for release branches and pull requests targeting `main
 During monorepo setup, test and coverage paths are expected to move from the current flat layout (`tests/qa/**`) into package-scoped locations (for example, `packages/core-metabolic/tests/**`, `packages/core-planning/tests/**`, and `packages/core-shopping/tests/**`). CI policy should therefore:
 
 1. Use the concrete paths in this document today.
-2. Treat `core/metabolic/**`, `core/planning/**`, and `core/shopping/**` as planned coverage targets.
+2. Enforce current core engine coverage at `src/domain/metabolicEngine.js`, `src/planner/engine.js`, and `src/shopping/consolidation.js` via `npm run coverage:engine` and keep `core/*` paths as planned monorepo targets.
 3. Update gate path globs in the same PR that introduces package path moves to avoid silent gate bypass.
 
 ### 1) Unit Tests (Metabolic & Macro Engine)
@@ -61,8 +61,14 @@ Add contract tests for frontend/backend interfaces:
 - Error contract validation (status code + error body format)
 
 ## CI Coverage Gates
-Coverage checks for core engine modules are required. Minimum thresholds:
+Coverage checks for core engine modules are required. Current enforced thresholds:
 
+- `src/domain/metabolicEngine.js`: 90% line, 85% branch (`npm run coverage:engine`)
+- `src/planner/engine.js`: 85% line, 80% branch (`npm run coverage:engine`)
+- `src/shopping/consolidation.js`: 85% line, 80% branch (`npm run coverage:engine`)
+- Full QA suite execution remains required via `npm run coverage:check`
+
+Planned monorepo targets (to be enforced when paths exist):
 - `core/metabolic/**`: 90% line, 90% branch
 - `core/planning/**`: 85% line, 80% branch
 - `core/shopping/**`: 85% line, 80% branch

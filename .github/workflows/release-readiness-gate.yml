@@ -1,0 +1,33 @@
+name: Release Readiness Gate
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release-readiness:
+    name: Release Readiness
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Execute release readiness QA bundle
+        run: npm run qa:release
+
+      - name: Upload release checklist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-readiness-checklist
+          path: artifacts/release-readiness-checklist.md
