@@ -72,6 +72,10 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Add unit toggle support (imperial/metric) and target calorie auto-calculation from requested weekly loss.
 - [x] Add meal bank + drag/drop planner swapping with consistent day-card formatting.
 - [x] Add tabbed UI sections and readability-focused shopping table layout.
+- [x] Add two-member profile cards with weight-first input ordering and unit-aware weekly-loss labels.
+- [x] Add planner preference filters for cuisines plus include/exclude ingredients and wire through API preview generation.
+- [x] Add recipes-used tab showing selected planner meals with ingredient details.
+- [x] Expand lunch/dinner recipe variety with chinese/italian/korean options for better weekly diversity.
 
 ## Phase 11 — Dedicated QA & Release Readiness
 - [ ] Enforce pre-deploy QA gate for release candidates.

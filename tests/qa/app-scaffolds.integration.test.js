@@ -309,8 +309,10 @@ test('integration: web scaffold renders Next.js landing page', async () => {
     assert.match(html, /Profile and Goals/);
     assert.match(html, /Weekly Planner/);
     assert.match(html, /Shopping List/);
+    assert.match(html, /Recipes Used/);
     assert.match(html, /Load saved profiles/);
     assert.match(html, /Calculate target calories/);
+    assert.match(html, /member-1/);
   } finally {
     await stopProcess(child);
   }

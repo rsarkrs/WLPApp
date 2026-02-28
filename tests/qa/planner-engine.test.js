@@ -37,7 +37,7 @@ test('planner engine: fallback is set when macro error exceeds tolerance', () =>
     seed: 1,
     days: 7,
     mealType: 'dinner',
-    cuisine: 'asian',
+    cuisine: 'korean',
     targetMacros: { proteinG: 300, fatG: 10, carbG: 10 },
   });
 
@@ -76,4 +76,31 @@ test('planner engine: planning preview enforces safety constraints', () => {
   assert.equal(preview.safety.calorie.finalDailyCalories, 1200);
   assert.equal(preview.safety.weeklyCap.approvedWeeklyLossKg, 0.8);
   assert.ok(preview.plan.debug.length >= 2);
+});
+
+
+test('planner engine: include and exclude ingredient preferences are applied', () => {
+  const result = buildPlanningPreview({
+    recipes: seedRecipes,
+    seed: 3,
+    days: 3,
+    cuisine: 'chinese,korean',
+    includeIngredient: 'rice',
+    excludeIngredient: 'cheese',
+    sex: 'female',
+    dailyCalories: 1600,
+    weightKg: 70,
+    requestedWeeklyLossKg: 0.4,
+  });
+
+  assert.ok(result.plan.days.length > 0);
+  for (const day of result.plan.days) {
+    for (const meal of day.meals) {
+      const recipe = seedRecipes.find((item) => item.id === meal.recipeId);
+      assert.ok(['chinese', 'korean'].includes(recipe.cuisine));
+      const ingredients = recipe.ingredients.map((item) => item.name.toLowerCase());
+      assert.ok(ingredients.includes('rice'));
+      assert.equal(ingredients.includes('cheese'), false);
+    }
+  }
 });
