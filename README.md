@@ -123,6 +123,7 @@ npm run qa:mobile
 - API scaffold now includes `/metrics` for service counters/route stats used by Phase 12 alerting baselines.
 - Production baseline files added: `.env.production.example`, `.github/workflows/deploy-production.yml`, and `docs/operations/production-runbook.md`.
 - Web scaffold now includes a baseline PWA setup (manifest + service worker + mobile app meta tags) and Android readiness guidance at `docs/mobile/android-readiness.md`.
+- Android execution docs now include an emulator testing guide and Play submission runbook (`docs/mobile/android-studio-testing.md`, `docs/mobile/play-store-submission-runbook.md`) plus an Android signing baseline workflow (`.github/workflows/android-release-baseline.yml`).
 - Compliance baseline now includes repository-tracked privacy/Data Safety docs and a CI compliance-doc gate (`docs/compliance/privacy-policy.md`, `docs/compliance/play-store-data-safety-checklist.md`, `.github/workflows/compliance-doc-gate.yml`).
 - QA hardening now includes shared API payload contract validators (`src/contracts/api.js`) with contract tests against live API responses.
 - Web scaffold now keeps profile/planner state in browser localStorage (local-only persistence; no hosted profile storage required).

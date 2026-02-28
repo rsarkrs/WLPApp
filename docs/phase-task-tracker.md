@@ -107,3 +107,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Add baseline privacy policy draft in repository docs.
 - [x] Add Play Store Data Safety checklist template.
 - [x] Add CI gate to enforce required compliance doc presence.
+
+
+## Phase 15 — Android Validation & Store Ops
+- [x] Add Android Studio emulator testing guide for local/dev validation.
+- [x] Add Play Store submission runbook/checklist for internal testing and release prep.
+- [x] Add Android release baseline workflow with signing-secret validation placeholders.
