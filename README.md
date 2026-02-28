@@ -68,7 +68,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - API scaffold now includes recipe import run endpoints (`/v1/imports`, `/v1/imports/:id`) with dedupe detection.
 - QA hardening now includes shared API payload contract validators (`src/contracts/api.js`) with contract tests against live API responses.
 - Web scaffold now includes a profile + goal setup form that posts to `/v1/profile` (configurable with `NEXT_PUBLIC_API_BASE`).
-- Web scaffold now includes tabbed Profile/Planner/Recipes/Shopping sections, two-member profile setup with optional second-person toggle, unit-aware weekly-loss input, multi-select cuisine preferences, ingredient exclusion multi-select from meal-bank ingredients, per-member scaled macros in planner cards, a unique recipe picker with quantities + instructions, a 7-day drag-and-drop planner with meal bank swaps, and categorized shopping totals shown in table format with JSON export.
+- Web scaffold now includes tabbed Profile/Planner/Recipes/Shopping sections, two-member profile setup with optional second-person toggle, unit-aware weekly-loss input, multi-select cuisine preferences, ingredient exclusion multi-select from meal-bank ingredients, member-ID planner toggle with per-member scaled macros in planner cards, a unique recipe picker with quantities + instructions, a 7-day drag-and-drop planner with meal bank swaps, and categorized shopping totals shown in table format with JSON export.
 - CI-friendly root `build` script now executes workspace build scripts.
 
 #### Local startup commands (scaffold)

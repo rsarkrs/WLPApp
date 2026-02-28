@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const mealSlots = ['breakfast', 'lunch', 'dinner'];
@@ -136,6 +136,7 @@ export default function HomePage() {
     cuisines: [],
     excludedIngredients: [],
   });
+  const [selectedPlannerMemberId, setSelectedPlannerMemberId] = useState('');
 
   const apiBase = useMemo(() => '/api', []);
   const editableProfiles = enableSecondProfile ? profiles : profiles.slice(0, 1);
@@ -157,6 +158,18 @@ export default function HomePage() {
     })),
     [activeProfiles]
   );
+
+  useEffect(() => {
+    if (profileScales.length === 0) return;
+    const exists = profileScales.some((item) => item.memberId === selectedPlannerMemberId);
+    if (!exists) {
+      setSelectedPlannerMemberId(profileScales[0].memberId);
+    }
+  }, [profileScales, selectedPlannerMemberId]);
+
+  function selectedPlannerScale() {
+    return profileScales.find((item) => item.memberId === selectedPlannerMemberId) || profileScales[0] || { memberId: 'member-1', scale: 1 };
+  }
 
   function updateProfile(index, patch) {
     setProfiles((current) => current.map((item, i) => (i === index ? { ...item, ...patch } : item)));
@@ -344,19 +357,15 @@ export default function HomePage() {
     }
   }
 
-  function dayTotalsByProfile(meals) {
-    return profileScales.map(({ memberId, scale }) => {
-      const totals = meals.filter(Boolean).reduce((acc, meal) => {
-        const scaled = scaleMacros(meal.macros, scale);
-        acc.protein += scaled.proteinG;
-        acc.fat += scaled.fatG;
-        acc.carbs += scaled.carbG;
-        acc.calories += estimateCalories(scaled);
-        return acc;
-      }, { protein: 0, fat: 0, carbs: 0, calories: 0 });
-
-      return { memberId, totals };
-    });
+  function dayTotalsForScale(meals, scale) {
+    return meals.filter(Boolean).reduce((acc, meal) => {
+      const scaled = scaleMacros(meal.macros, scale);
+      acc.protein += scaled.proteinG;
+      acc.fat += scaled.fatG;
+      acc.carbs += scaled.carbG;
+      acc.calories += estimateCalories(scaled);
+      return acc;
+    }, { protein: 0, fat: 0, carbs: 0, calories: 0 });
   }
 
   async function generateShoppingList() {
@@ -593,9 +602,33 @@ export default function HomePage() {
           </div>
           <p aria-live="polite">{plannerMessage}</p>
 
+          <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.6rem', flexWrap: 'wrap' }}>
+            {profileScales.map((item) => {
+              const active = item.memberId === selectedPlannerScale().memberId;
+              return (
+                <button
+                  key={item.memberId}
+                  type="button"
+                  onClick={() => setSelectedPlannerMemberId(item.memberId)}
+                  style={{
+                    borderRadius: '999px',
+                    border: active ? '1px solid #4c63d2' : '1px solid #d2d7ef',
+                    background: active ? '#4c63d2' : '#eef1ff',
+                    color: active ? 'white' : '#233',
+                    padding: '0.35rem 0.75rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {item.memberId}
+                </button>
+              );
+            })}
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(185px, 1fr))', gap: '0.55rem' }}>
             {weekPlan.map((day, dayIndex) => {
-              const totalsByMember = dayTotalsByProfile(day.meals);
+              const activeScale = selectedPlannerScale();
+              const totals = dayTotalsForScale(day.meals, activeScale.scale);
               return (
                 <div key={day.day} style={{ border: '1px solid #cfd7f3', borderRadius: '8px', padding: '0.45rem', background: 'white', display: 'flex', flexDirection: 'column' }}>
                   <h3 style={{ marginTop: 0, textAlign: 'center' }}>{day.dayName}</h3>
@@ -606,28 +639,26 @@ export default function HomePage() {
                       onDrop={() => onDrop(dayIndex, mealIndex)}
                       style={{ border: '1px solid #d8ddf5', height: '132px', marginBottom: '0.4rem', borderRadius: '6px', padding: '0.35rem', background: '#f6f8ff', overflow: 'auto' }}
                     >
-                      {meal ? (
-                        <div draggable onDragStart={() => onDragStart({ kind: 'slot', dayIndex, mealIndex })} style={{ cursor: 'move' }}>
-                          <div style={{ fontWeight: 600 }}>{meal.recipeName}</div>
-                          {profileScales.map((item) => {
-                            const macros = scaleMacros(meal.macros, item.scale);
-                            return (
-                              <small key={`${meal.recipeId}-${item.memberId}`} style={{ display: 'block' }}>
-                                {item.memberId}: {estimateCalories(macros)} cal • P {macros.proteinG}g • F {macros.fatG}g • C {macros.carbG}g
-                              </small>
-                            );
-                          })}
-                        </div>
-                      ) : <small style={{ color: '#7b8199' }}>Drop meal here</small>}
-                    </div>
-                  ))}
-                  <div style={{ marginTop: 'auto', borderTop: '1px solid #d8ddf5', paddingTop: '0.35rem' }}>
-                    <small><strong>Daily totals</strong></small>
-                    {totalsByMember.map((member) => (
-                      <small key={member.memberId} style={{ display: 'block' }}>
-                        {member.memberId}: {member.totals.calories} cal • P {member.totals.protein}g • F {member.totals.fat}g • C {member.totals.carbs}g
-                      </small>
+                        {meal ? (
+                          <div draggable onDragStart={() => onDragStart({ kind: 'slot', dayIndex, mealIndex })} style={{ cursor: 'move' }}>
+                            <div style={{ fontWeight: 600 }}>{meal.recipeName}</div>
+                            {(() => {
+                              const macros = scaleMacros(meal.macros, activeScale.scale);
+                              return (
+                                <small style={{ display: 'block' }}>
+                                  {activeScale.memberId}: {estimateCalories(macros)} cal • P {macros.proteinG}g • F {macros.fatG}g • C {macros.carbG}g
+                                </small>
+                              );
+                            })()}
+                          </div>
+                        ) : <small style={{ color: '#7b8199' }}>Drop meal here</small>}
+                      </div>
                     ))}
+                  <div style={{ marginTop: 'auto', borderTop: '1px solid #d8ddf5', paddingTop: '0.35rem' }}>
+                    <small><strong>Daily total</strong></small>
+                    <small style={{ display: 'block' }}>
+                      {activeScale.memberId}: {totals.calories} cal • P {totals.protein}g • F {totals.fat}g • C {totals.carbs}g
+                    </small>
                   </div>
                 </div>
               );
