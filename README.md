@@ -2,6 +2,53 @@
 
 Constraint-based meal planning application focused on metabolic safety, macro adherence, household scaling, and unified shopping output.
 
+
+## Quick Start: Run and Test the App
+
+### 1) Install dependencies
+```bash
+npm install
+```
+
+### 2) Start the API
+```bash
+npm run start:api
+```
+- API runs on `http://127.0.0.1:4000` by default.
+- Health checks:
+  - `GET /health`
+  - `GET /health/live`
+  - `GET /health/ready`
+  - `GET /metrics`
+
+### 3) Start the Web app (in another terminal)
+```bash
+npm run start:web
+```
+- Web runs on `http://127.0.0.1:3000` by default.
+- The web app proxies `/api/*` requests to the API service.
+
+### 4) Run the full test suite
+```bash
+npm run lint
+npm run test:unit
+npm run test:property
+npm run test:integration
+npm run test:contract
+```
+
+### 5) Run coverage gates
+```bash
+npm run coverage:engine
+npm run coverage:check
+```
+
+### 6) Run release-readiness checks
+```bash
+npm run qa:release
+```
+- Generates: `artifacts/release-readiness-checklist.md`.
+
 ## Schema Source of Truth
 
 - The canonical schema spec is [`db/schema.models.md`](db/schema.models.md). All entity names, relationships, and naming updates must be made there first.
