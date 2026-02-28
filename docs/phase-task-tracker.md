@@ -68,6 +68,10 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Build profile and goal setup flow.
 - [x] Build weekly planner view with regenerate/swap flow.
 - [x] Build shopping list grouped view and export action.
+- [x] Add saved-profile loading for multi-member households (MVP two-person planning).
+- [x] Add unit toggle support (imperial/metric) and target calorie auto-calculation from requested weekly loss.
+- [x] Add meal bank + drag/drop planner swapping with consistent day-card formatting.
+- [x] Add tabbed UI sections and readability-focused shopping table layout.
 
 ## Phase 11 — Dedicated QA & Release Readiness
 - [ ] Enforce pre-deploy QA gate for release candidates.
