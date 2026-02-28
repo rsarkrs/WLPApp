@@ -92,5 +92,5 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 ## Phase 12 — Production Readiness & Deployment
 - [x] Add structured logging and request correlation IDs.
 - [x] Add liveness/readiness endpoints with dependency checks.
-- [ ] Define metrics/alerts/runbooks for planner, importer, and DB.
-- [ ] Configure production deployment and secure environment variables.
+- [x] Define metrics/alerts/runbooks for planner, importer, and DB.
+- [x] Configure production deployment and secure environment variables.

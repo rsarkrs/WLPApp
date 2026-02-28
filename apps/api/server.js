@@ -11,6 +11,15 @@ const { upsertProfile, getProfile, listProfiles, getPlanningResult, savePlanning
 const app = express();
 app.use(express.json());
 const port = Number(process.env.PORT || 4000);
+const metricsState = {
+  startedAt: new Date().toISOString(),
+  requestsTotal: 0,
+  status2xx: 0,
+  status4xx: 0,
+  status5xx: 0,
+  byPath: {},
+  durationsMs: [],
+};
 
 const readinessConfig = {
   dbHost: process.env.POSTGRES_HOST || process.env.DB_HOST || '127.0.0.1',
@@ -48,6 +57,24 @@ app.use((req, res, next) => {
   const started = Date.now();
   res.on('finish', () => {
     const durationMs = Date.now() - started;
+    metricsState.requestsTotal += 1;
+    if (res.statusCode >= 500) metricsState.status5xx += 1;
+    else if (res.statusCode >= 400) metricsState.status4xx += 1;
+    else metricsState.status2xx += 1;
+
+    const key = `${req.method} ${req.path}`;
+    if (!metricsState.byPath[key]) {
+      metricsState.byPath[key] = { total: 0, errors: 0, p95Ms: 0 };
+    }
+    metricsState.byPath[key].total += 1;
+    if (res.statusCode >= 400) metricsState.byPath[key].errors += 1;
+    metricsState.durationsMs.push(durationMs);
+    if (metricsState.durationsMs.length > 2000) metricsState.durationsMs.shift();
+
+    const sorted = [...metricsState.durationsMs].sort((a, b) => a - b);
+    const p95Index = Math.floor(sorted.length * 0.95);
+    metricsState.byPath[key].p95Ms = sorted[p95Index] || durationMs;
+
     console.log(JSON.stringify({
       level: 'info',
       requestId,
@@ -92,6 +119,22 @@ app.get('/health/ready', async (req, res) => {
       },
     },
     requestId: req.requestId,
+  });
+});
+
+app.get('/metrics', (_req, res) => {
+  const uptimeSeconds = Math.floor(process.uptime());
+  res.status(200).json({
+    service: 'wlpapp-api',
+    uptimeSeconds,
+    startedAt: metricsState.startedAt,
+    requestsTotal: metricsState.requestsTotal,
+    status: {
+      status2xx: metricsState.status2xx,
+      status4xx: metricsState.status4xx,
+      status5xx: metricsState.status5xx,
+    },
+    byPath: metricsState.byPath,
   });
 });
 
@@ -366,7 +409,7 @@ app.get('/v1/plans/preview', (req, res) => {
 app.get('/', (_req, res) => {
   res.status(200).json({
     name: 'WLPApp API scaffold',
-    endpoints: ['/health', '/health/live', '/health/ready', '/v1/profile', '/v1/profiles', '/v1/imports', '/v1/metabolic/preview', '/v1/recipes', '/v1/plans/preview', '/v1/plans/generate', '/v1/shopping/preview']
+    endpoints: ['/health', '/health/live', '/health/ready', '/metrics', '/v1/profile', '/v1/profiles', '/v1/imports', '/v1/metabolic/preview', '/v1/recipes', '/v1/plans/preview', '/v1/plans/generate', '/v1/shopping/preview']
   });
 });
 
