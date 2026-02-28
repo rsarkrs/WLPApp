@@ -17,6 +17,7 @@ This runs `scripts/bootstrap_twa_project.sh` and invokes Bubblewrap to initializ
 - `HOST_URL` (default: `https://example.com`)
 - `LAUNCHER_NAME` (default: `wlpapp-android`)
 - `OUTPUT_DIR` (default: `android/twa`)
+- `DRY_RUN` (default: `0`; set `1` to print command only)
 
 Example:
 
@@ -32,3 +33,13 @@ npm run android:twa:init
 - Requires Java + Android SDK tooling installed on your machine.
 - The script refuses to overwrite a non-empty output directory.
 - After initialization, use Bubblewrap build/sign commands and follow `docs/mobile/play-store-submission-runbook.md`.
+
+## CI/local smoke mode
+
+Use dry-run smoke validation without generating Android project files:
+
+```bash
+npm run android:twa:smoke
+```
+
+This is the command used by the Android shell smoke gate workflow.

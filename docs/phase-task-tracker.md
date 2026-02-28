@@ -118,4 +118,4 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 ## Phase 16 — Android Shell Automation
 - [x] Add automated TWA shell bootstrap script for local packaging setup.
 - [x] Add TWA bootstrap usage guide with environment variable overrides.
-- [ ] Add CI smoke validation for generated Android shell project structure.
+- [x] Add CI smoke validation for generated Android shell project structure.

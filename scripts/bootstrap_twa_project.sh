@@ -9,6 +9,7 @@ APP_NAME="${APP_NAME:-WLPApp}"
 HOST_URL="${HOST_URL:-https://example.com}"
 LAUNCHER_NAME="${LAUNCHER_NAME:-wlpapp-android}"
 OUTPUT_DIR="${OUTPUT_DIR:-android/twa}"
+DRY_RUN="${DRY_RUN:-0}"
 
 if ! command -v npx >/dev/null 2>&1; then
   echo "npx is required but was not found in PATH." >&2
@@ -29,14 +30,25 @@ Bootstrapping TWA project with:
   HOST_URL=$HOST_URL
   LAUNCHER_NAME=$LAUNCHER_NAME
   OUTPUT_DIR=$OUTPUT_DIR
+  DRY_RUN=$DRY_RUN
 INFO
 
-npx @bubblewrap/cli@latest init \
-  --manifest="$HOST_URL/manifest.webmanifest" \
-  --directory="$OUTPUT_DIR" \
-  --packageId="$APP_ID" \
-  --name="$APP_NAME" \
-  --launcherName="$LAUNCHER_NAME"
+BWRAP_COMMAND=(
+  npx @bubblewrap/cli@latest init
+  "--manifest=$HOST_URL/manifest.webmanifest"
+  "--directory=$OUTPUT_DIR"
+  "--packageId=$APP_ID"
+  "--name=$APP_NAME"
+  "--launcherName=$LAUNCHER_NAME"
+)
+
+if [ "$DRY_RUN" = "1" ]; then
+  printf 'DRY RUN: %q ' "${BWRAP_COMMAND[@]}"
+  printf '\n'
+  exit 0
+fi
+
+"${BWRAP_COMMAND[@]}"
 
 cat <<NEXT_STEPS
 

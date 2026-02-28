@@ -125,6 +125,7 @@ npm run qa:mobile
 - Web scaffold now includes a baseline PWA setup (manifest + service worker + mobile app meta tags) and Android readiness guidance at `docs/mobile/android-readiness.md`.
 - Android execution docs now include an emulator testing guide and Play submission runbook (`docs/mobile/android-studio-testing.md`, `docs/mobile/play-store-submission-runbook.md`) plus an Android signing baseline workflow (`.github/workflows/android-release-baseline.yml`).
 - Android TWA shell bootstrap automation is now available via `npm run android:twa:init` (see `docs/mobile/twa-bootstrap.md`).
+- Android shell bootstrap smoke validation is now enforced in CI (`.github/workflows/android-shell-smoke-gate.yml`) and runnable locally via `npm run android:twa:smoke`.
 - Compliance baseline now includes repository-tracked privacy/Data Safety docs and a CI compliance-doc gate (`docs/compliance/privacy-policy.md`, `docs/compliance/play-store-data-safety-checklist.md`, `.github/workflows/compliance-doc-gate.yml`).
 - QA hardening now includes shared API payload contract validators (`src/contracts/api.js`) with contract tests against live API responses.
 - Web scaffold now keeps profile/planner state in browser localStorage (local-only persistence; no hosted profile storage required).
