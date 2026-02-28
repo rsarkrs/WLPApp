@@ -1,0 +1,21 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: wlpapp-postgres
+    environment:
+      POSTGRES_DB: wlpapp
+      POSTGRES_USER: wlpapp
+      POSTGRES_PASSWORD: wlpapp
+    ports:
+      - "5432:5432"
+    volumes:
+      - wlpapp_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wlpapp -d wlpapp"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  wlpapp_postgres_data:

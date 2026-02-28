@@ -10,6 +10,8 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 
 ## Revised Delivery Plan
 
+> Execution tracker: see [`docs/phase-task-tracker.md`](docs/phase-task-tracker.md) for cross-off task status by phase.
+
 ### Phase 0: Domain Model & Rules Contract (Pre-DB)
 - Publish a canonical contract package (types + validation + examples) that must be imported by all downstream services before schema/migration work starts.
 - Define canonical entities/relationships via the schema source-of-truth: [`db/schema.models.md`](db/schema.models.md).
@@ -56,6 +58,39 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Configure PostgreSQL and local dev environment.
 - Add CI pipeline scaffold (lint, test, build).
 
+#### Current bootstrap status
+- Monorepo workspaces are initialized via root `package.json` workspaces (`apps/*`).
+- `apps/web` and `apps/api` now include runnable scaffolds (Next.js web shell + Express API shell) to unblock parallel feature work.
+- API scaffold now includes recipe catalog filtering preview endpoint (`/v1/recipes`) with cuisine/meal-type/include/exclude ingredient filtering.
+- Planner preview endpoint available at `/v1/plans/preview` for deterministic seeded plan debugging and safety preview.
+- API scaffold now includes profile and idempotent planning endpoints (`/v1/profile`, `/v1/plans/generate`).
+- API scaffold now includes shopping consolidation preview endpoint (`/v1/shopping/preview`) with pantry exclusion support.
+- API scaffold now includes recipe import run endpoints (`/v1/imports`, `/v1/imports/:id`) with dedupe detection.
+- QA hardening now includes shared API payload contract validators (`src/contracts/api.js`) with contract tests against live API responses.
+- Web scaffold now includes a profile + goal setup form that posts to `/v1/profile` (configurable with `NEXT_PUBLIC_API_BASE`).
+- Web scaffold now includes tabbed Profile/Planner/Shopping sections, saved-profile loading for multi-member households, unit toggle + calorie target calculation, a 7-day drag-and-drop planner with meal bank swaps, and categorized shopping totals shown in table format with JSON export.
+- CI-friendly root `build` script now executes workspace build scripts.
+
+#### Local startup commands (scaffold)
+- Install dependencies (workspace-aware): `npm install`
+- Start local PostgreSQL (Docker): `npm run db:up`
+- Check PostgreSQL service status: `npm run db:status`
+- Start web scaffold (default `http://localhost:3000`): `npm run start:web`
+  - Web calls `/api/*` on the same origin; Next.js rewrites these to the API service (default `http://127.0.0.1:4000`).
+  - Keep `npm run start:api` running while using web flows, otherwise UI actions show a friendly API-unreachable error.
+  - Optional custom port (cross-platform): `PORT=3100 npm run start:web` (PowerShell: `$env:PORT=3100; npm run start:web`, CMD: `set PORT=3100&& npm run start:web`).
+  - Uses a cross-platform Node launcher (`apps/web/scripts/dev-server.js`) to avoid Windows `spawn EINVAL` issues with direct `.cmd` execution.
+- Start api scaffold (default `http://localhost:4000`): `npm run start:api`
+- Run aggregate build: `npm run build`
+- Stop local services (including DB): `npm run db:down`
+
+#### Local database defaults
+- Host: `localhost`
+- Port: `5432`
+- Database: `wlpapp`
+- Username: `wlpapp`
+- Password: `wlpapp`
+
 
 **Definition of Done (Template)**
 - **Required deliverables:** Monorepo workspace configuration, Next.js app scaffold, Express API scaffold, local PostgreSQL setup docs/scripts, CI workflow files.
@@ -95,6 +130,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 **Definition of Done (Template)**
 - **Required deliverables:** Rule-engine modules for BMR/TDEE, deficit cap, calorie floors, macro allocation, and typed contract interfaces.
 - **Mandatory checks:** Lint/typecheck pass; unit and edge-case tests pass; core engine coverage >= 90% line and >= 85% branch.
+- Enforcement note: `npm run coverage:engine` gates metabolic engine coverage at line >= 90% and branch >= 85%.
 - **Ownership:** Nutrition Engine area (`packages/domain-rules` and API integration adapters).
 - **Exit criteria (verifiable):**
   - Contract test vectors for each rule return deterministic outputs.
@@ -117,6 +153,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
   - Ingredient units and quantities pass normalization validation for all seeded recipes.
 
 ### Phase 5A: Weekly Planner Algorithm Design
+- Design artifact: [`docs/planner/algorithm-design.md`](docs/planner/algorithm-design.md).
 - Define planner objective function and scoring weights:
   - Macro target fit score
   - Ingredient overlap score
