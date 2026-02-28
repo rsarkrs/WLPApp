@@ -54,6 +54,7 @@ app.get('/v1/recipes', (req, res) => {
     mealType: recipe.mealType,
     macros: recipe.macros,
     ingredients: recipe.ingredients,
+    instructions: recipe.instructions || [],
   }));
 
   return res.status(200).json({
