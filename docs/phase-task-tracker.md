@@ -81,6 +81,7 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Replace free-text ingredient filters with ingredient exclusion multi-select sourced from meal-bank ingredients.
 - [x] Enforce whole-number quantities for `item` units across planner recipe scaling and shopping outputs.
 - [x] Show per-member scaled calories/macros in planner meal cards and daily totals when one or two profiles are active.
+- [x] Add member-ID toggle selector above weekly planner day grid to view one member's macros/calories at a time and reduce card crowding.
 - [x] Update Recipes Used to a unique recipe selector with ingredient quantities and step-by-step instructions.
 
 ## Phase 11 — Dedicated QA & Release Readiness
