@@ -99,5 +99,11 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 ## Phase 13 — Mobile Productization (Android/Play Store)
 - [x] Establish baseline PWA packaging assets (manifest, app icons, service worker registration).
 - [x] Document Android readiness gaps and release constraints for Play Store distribution.
-- [ ] Add CI quality gates for mobile installability/performance (e.g., Lighthouse PWA checks).
-- [ ] Select packaging path (TWA vs native shell) and define signed release pipeline.
+- [x] Add CI quality gates for mobile installability/performance (e.g., Lighthouse PWA checks).
+- [x] Select packaging path (TWA vs native shell) and define signed release pipeline.
+
+
+## Phase 14 — Compliance & Store Submission Readiness
+- [x] Add baseline privacy policy draft in repository docs.
+- [x] Add Play Store Data Safety checklist template.
+- [x] Add CI gate to enforce required compliance doc presence.

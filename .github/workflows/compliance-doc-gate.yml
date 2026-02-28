@@ -1,0 +1,21 @@
+name: Compliance Documentation Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  compliance-docs:
+    name: Compliance Docs Presence
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required compliance docs
+        run: |
+          test -f docs/compliance/privacy-policy.md || (echo "Missing docs/compliance/privacy-policy.md" && exit 1)
+          test -f docs/compliance/play-store-data-safety-checklist.md || (echo "Missing docs/compliance/play-store-data-safety-checklist.md" && exit 1)
