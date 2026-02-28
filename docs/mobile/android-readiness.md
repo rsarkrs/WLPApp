@@ -27,5 +27,5 @@ WLPApp currently ships as web + API scaffolds. To support a Google Play distribu
 
 ## Recommended next implementation steps
 1. Add a dedicated `Phase 13` track in the plan for mobile packaging and compliance deliverables.
-2. Add Lighthouse PWA quality checks to CI for installability/regression checks.
+2. Add Lighthouse PWA quality checks to CI for installability/regression checks (current baseline threshold: PWA >= 0.6 while installability hardening is in progress).
 3. Implement provider-backed telemetry and error monitoring for production mobile sessions.
