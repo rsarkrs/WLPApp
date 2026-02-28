@@ -4,6 +4,7 @@ const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satur
 const mealSlots = ['breakfast', 'lunch', 'dinner'];
 const cuisineOptions = ['american', 'mediterranean', 'italian', 'chinese', 'korean'];
 const defaultActivity = 'moderate';
+const localStateKey = 'wlpapp-local-state-v1';
 
 function makeProfile(memberId) {
   return {
@@ -74,6 +75,28 @@ function cmToFtIn(cm) {
   const feet = Math.floor(totalInches / 12);
   const inches = Number((totalInches - (feet * 12)).toFixed(1));
   return { feet, inches };
+}
+
+
+function weekAverageCalories(weekPlan, scale) {
+  const daysWithMeals = weekPlan.filter((day) => day.meals.some(Boolean));
+  if (daysWithMeals.length === 0) return 0;
+  const total = daysWithMeals.reduce((sum, day) => sum + dayTotalsForScale(day.meals, scale).calories, 0);
+  return total / daysWithMeals.length;
+}
+
+function calibrateScaleToTarget(weekPlan, baseScale, targetCalories) {
+  const currentAverage = weekAverageCalories(weekPlan, baseScale);
+  if (!Number.isFinite(currentAverage) || currentAverage <= 0) {
+    return { scale: baseScale, averageCalories: 0 };
+  }
+
+  const ratio = Number(targetCalories) / currentAverage;
+  const calibrated = Math.max(0.25, Math.min(3, baseScale * ratio));
+  return {
+    scale: calibrated,
+    averageCalories: Math.round(weekAverageCalories(weekPlan, calibrated)),
+  };
 }
 
 function normalizeProfileToMetric(profile) {
@@ -154,22 +177,89 @@ export default function HomePage() {
   const profileScales = useMemo(
     () => activeProfiles.map((profile) => ({
       memberId: profile.memberId,
-      scale: Math.max(Number(profile.targetDailyCalories || 2000), 1) / 2000,
+      targetDailyCalories: Number(profile.targetDailyCalories || 2000),
+      baseScale: Math.max(Number(profile.targetDailyCalories || 2000), 1) / 2000,
     })),
     [activeProfiles]
   );
 
+  const calibratedProfileScales = useMemo(
+    () => profileScales.map((item) => {
+      const calibrated = calibrateScaleToTarget(weekPlan, item.baseScale, item.targetDailyCalories);
+      return {
+        memberId: item.memberId,
+        scale: calibrated.scale,
+        targetDailyCalories: item.targetDailyCalories,
+        averageCalories: calibrated.averageCalories,
+      };
+    }),
+    [profileScales, weekPlan]
+  );
+
   useEffect(() => {
-    if (profileScales.length === 0) return;
-    const exists = profileScales.some((item) => item.memberId === selectedPlannerMemberId);
+    if (calibratedProfileScales.length === 0) return;
+    const exists = calibratedProfileScales.some((item) => item.memberId === selectedPlannerMemberId);
     if (!exists) {
-      setSelectedPlannerMemberId(profileScales[0].memberId);
+      setSelectedPlannerMemberId(calibratedProfileScales[0].memberId);
     }
-  }, [profileScales, selectedPlannerMemberId]);
+  }, [calibratedProfileScales, selectedPlannerMemberId]);
 
   function selectedPlannerScale() {
-    return profileScales.find((item) => item.memberId === selectedPlannerMemberId) || profileScales[0] || { memberId: 'member-1', scale: 1 };
+    return calibratedProfileScales.find((item) => item.memberId === selectedPlannerMemberId) || calibratedProfileScales[0] || { memberId: 'member-1', scale: 1, targetDailyCalories: 2000, averageCalories: 0 };
   }
+
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(localStateKey) || 'null');
+      if (!parsed) return;
+
+      if (Array.isArray(parsed.profiles) && parsed.profiles.length > 0) setProfiles(parsed.profiles);
+      if (typeof parsed.enableSecondProfile === 'boolean') setEnableSecondProfile(parsed.enableSecondProfile);
+      if (Array.isArray(parsed.savedProfiles)) setSavedProfiles(parsed.savedProfiles);
+      if (Array.isArray(parsed.selectedMembers)) setSelectedMembers(parsed.selectedMembers);
+      if (Array.isArray(parsed.weekPlan)) setWeekPlan(parsed.weekPlan);
+      if (Array.isArray(parsed.mealBank)) setMealBank(parsed.mealBank);
+      if (parsed.preferences) setPreferences(parsed.preferences);
+      if (typeof parsed.selectedRecipeId === 'string') setSelectedRecipeId(parsed.selectedRecipeId);
+      if (typeof parsed.seed === 'number') setSeed(parsed.seed);
+      if (typeof parsed.selectedPlannerMemberId === 'string') setSelectedPlannerMemberId(parsed.selectedPlannerMemberId);
+      setStatusMessage('Loaded local profile/planner data from this device.');
+    } catch (_error) {
+      setStatusMessage('Local profile data could not be restored.');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(
+      localStateKey,
+      JSON.stringify({
+        profiles,
+        enableSecondProfile,
+        savedProfiles,
+        selectedMembers,
+        weekPlan,
+        mealBank,
+        preferences,
+        selectedRecipeId,
+        seed,
+        selectedPlannerMemberId,
+      })
+    );
+  }, [
+    profiles,
+    enableSecondProfile,
+    savedProfiles,
+    selectedMembers,
+    weekPlan,
+    mealBank,
+    preferences,
+    selectedRecipeId,
+    seed,
+    selectedPlannerMemberId,
+  ]);
 
   function updateProfile(index, patch) {
     setProfiles((current) => current.map((item, i) => (i === index ? { ...item, ...patch } : item)));
@@ -222,34 +312,22 @@ export default function HomePage() {
       requestedWeeklyLossKg: metric.requestedWeeklyLossKg,
     };
 
-    try {
-      const response = await fetch(`${apiBase}/v1/profile`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.message || body.code || 'Profile save failed');
-
-      setStatusMessage(`Saved ${body.memberId}.`);
-      await loadProfiles(body.householdId);
-    } catch (error) {
-      setStatusMessage(error?.message === 'Failed to fetch' ? 'Unable to reach API. Start `npm run start:api` and retry.' : error.message);
-    }
+    setSavedProfiles((current) => {
+      const without = current.filter((item) => item.memberId !== payload.memberId);
+      const next = [...without, payload];
+      next.sort((a, b) => a.memberId.localeCompare(b.memberId));
+      return next;
+    });
+    setSelectedMembers((current) => {
+      const without = current.filter((item) => item !== payload.memberId);
+      return [...without, payload.memberId].slice(0, enableSecondProfile ? 2 : 1);
+    });
+    setStatusMessage(`Saved ${payload.memberId} locally on this device.`);
   }
 
-  async function loadProfiles(householdId = profiles[0].householdId) {
-    try {
-      const response = await fetch(`${apiBase}/v1/profiles?householdId=${encodeURIComponent(householdId)}`);
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.message || body.code || 'Could not load profiles');
-
-      setSavedProfiles(body.items || []);
-      setSelectedMembers((body.items || []).slice(0, enableSecondProfile ? 2 : 1).map((item) => item.memberId));
-      setStatusMessage(`Loaded ${body.total} profile(s) for household ${householdId}.`);
-    } catch (error) {
-      setStatusMessage(error?.message === 'Failed to fetch' ? 'Unable to reach API profiles endpoint. Start `npm run start:api` and retry.' : error.message);
-    }
+  async function loadProfiles() {
+    setSelectedMembers(savedProfiles.slice(0, enableSecondProfile ? 2 : 1).map((item) => item.memberId));
+    setStatusMessage(`Loaded ${savedProfiles.length} locally saved profile(s).`);
   }
 
   function cuisinesQuery() {
@@ -389,7 +467,7 @@ export default function HomePage() {
       const body = await response.json();
       if (!response.ok) throw new Error(body.message || body.code || 'Shopping preview failed');
 
-      const householdScale = profileScales.reduce((sum, item) => sum + item.scale, 0);
+      const householdScale = calibratedProfileScales.reduce((sum, item) => sum + item.scale, 0);
       const rows = [];
       for (const [category, items] of Object.entries(body.byCategory || {})) {
         for (const item of items) {
@@ -403,7 +481,7 @@ export default function HomePage() {
       }
 
       setShoppingRows(rows.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name)));
-      setShoppingMessage(`Generated shopping totals for ${profileScales.length} active member(s).`);
+      setShoppingMessage(`Generated shopping totals for ${calibratedProfileScales.length} active member(s).`);
     } catch (error) {
       setShoppingMessage(error?.message === 'Failed to fetch' ? 'Unable to reach API shopping endpoint. Start `npm run start:api` and retry.' : error.message);
     }
@@ -481,7 +559,7 @@ export default function HomePage() {
     <main style={{ fontFamily: 'system-ui, sans-serif', margin: '1rem auto', maxWidth: '1400px', color: '#1f2438' }}>
       <h1>WLPApp Web Scaffold</h1>
       <p>Phase 10 MVP flows are running.</p>
-      <p>API target: <code>/api</code> (proxied to API service via Next.js rewrite)</p>
+      <p>API target: <code>/api</code> (used for calculations/meal generation only; profile data is local-storage only)</p>
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
         {tabButton('profile', 'Profile and Goals')}
@@ -508,7 +586,7 @@ export default function HomePage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${enableSecondProfile ? 2 : 1}, minmax(420px, 1fr))`, gap: '1rem' }}>
             {editableProfiles.map((profile, index) => (
-              <div key={profile.memberId} style={{ border: '1px solid #ccd4f0', borderRadius: '8px', padding: '0.75rem', background: 'white' }}>
+              <div key={`member-card-${index}`} style={{ border: '1px solid #ccd4f0', borderRadius: '8px', padding: '0.75rem', background: 'white' }}>
                 <h3 style={{ marginTop: 0 }}>Member {index + 1} profile</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(120px, 1fr))', gap: '0.6rem' }}>
                   <label>Household ID<input style={{ width: '100%' }} value={profile.householdId} onChange={(e) => updateProfile(index, { householdId: e.target.value })} /></label>
@@ -532,7 +610,7 @@ export default function HomePage() {
           </div>
 
           <div style={{ marginTop: '0.75rem' }}>
-            <button type="button" onClick={() => loadProfiles()}>Load saved profiles</button>
+            <button type="button" onClick={() => loadProfiles()}>Load saved profiles (local)</button>
             <p aria-live="polite">{statusMessage}</p>
             <p><strong>Members used for planner scaling (select up to {enableSecondProfile ? 2 : 1}):</strong></p>
             <ul>
@@ -601,9 +679,21 @@ export default function HomePage() {
             <button type="button" onClick={loadMealBank}>Load meal bank</button>
           </div>
           <p aria-live="polite">{plannerMessage}</p>
+          <ul style={{ marginTop: 0 }}>
+            {calibratedProfileScales.map((item) => {
+              if (!item.averageCalories) return <li key={`avg-${item.memberId}`}>{item.memberId}: generate a plan to evaluate target alignment.</li>;
+              const delta = item.averageCalories - item.targetDailyCalories;
+              const within = Math.abs(delta) <= 50;
+              return (
+                <li key={`avg-${item.memberId}`}>
+                  {item.memberId}: weekly average {item.averageCalories} kcal/day vs target {item.targetDailyCalories} kcal/day ({delta >= 0 ? '+' : ''}{delta}) {within ? '✓ within ±50' : '⚠ adjust preferences and regenerate'}
+                </li>
+              );
+            })}
+          </ul>
 
           <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.6rem', flexWrap: 'wrap' }}>
-            {profileScales.map((item) => {
+            {calibratedProfileScales.map((item) => {
               const active = item.memberId === selectedPlannerScale().memberId;
               return (
                 <button
@@ -708,7 +798,7 @@ export default function HomePage() {
                     <th style={{ textAlign: 'left', borderBottom: '1px solid #ccd4f0', padding: '0.35rem' }}>Ingredient</th>
                     <th style={{ textAlign: 'right', borderBottom: '1px solid #ccd4f0', padding: '0.35rem' }}>Base Qty</th>
                     <th style={{ textAlign: 'left', borderBottom: '1px solid #ccd4f0', padding: '0.35rem' }}>Unit</th>
-                    {profileScales.map((profile) => (
+                    {calibratedProfileScales.map((profile) => (
                       <th key={profile.memberId} style={{ textAlign: 'right', borderBottom: '1px solid #ccd4f0', padding: '0.35rem' }}>{profile.memberId} Qty</th>
                     ))}
                   </tr>
@@ -719,7 +809,7 @@ export default function HomePage() {
                       <td style={{ borderBottom: '1px solid #eef1ff', padding: '0.35rem' }}>{ingredient.name}</td>
                       <td style={{ borderBottom: '1px solid #eef1ff', padding: '0.35rem', textAlign: 'right' }}>{ingredient.qty}</td>
                       <td style={{ borderBottom: '1px solid #eef1ff', padding: '0.35rem' }}>{ingredient.unit}</td>
-                      {profileScales.map((profile) => (
+                      {calibratedProfileScales.map((profile) => (
                         <td key={`${profile.memberId}-${ingredient.name}`} style={{ borderBottom: '1px solid #eef1ff', padding: '0.35rem', textAlign: 'right' }}>
                           {normalizeQtyForUnit(ingredient.qty * profile.scale, ingredient.unit)}
                         </td>
