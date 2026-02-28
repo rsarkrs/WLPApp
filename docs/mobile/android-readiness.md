@@ -33,3 +33,5 @@ WLPApp currently ships as web + API scaffolds. To support a Google Play distribu
 ## Execution guides
 - Android Studio testing: `docs/mobile/android-studio-testing.md`
 - Play Store submission: `docs/mobile/play-store-submission-runbook.md`
+
+- TWA bootstrap automation: `docs/mobile/twa-bootstrap.md`
