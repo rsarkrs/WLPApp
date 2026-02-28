@@ -1,0 +1,28 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "npm exec --workspace @wlpapp/web next start -p 3000",
+      "startServerReadyPattern": "http://localhost:3000",
+      "numberOfRuns": 1,
+      "url": [
+        "http://localhost:3000/"
+      ]
+    },
+    "assert": {
+      "assertions": {
+        "categories:pwa": [
+          "error",
+          {
+            "minScore": 0.9
+          }
+        ],
+        "categories:performance": [
+          "error",
+          {
+            "minScore": 0.45
+          }
+        ]
+      }
+    }
+  }
+}

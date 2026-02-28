@@ -49,6 +49,12 @@ npm run qa:release
 ```
 - Generates: `artifacts/release-readiness-checklist.md`.
 
+### 7) Run mobile Lighthouse quality gate locally
+```bash
+npm run qa:mobile
+```
+- Uses `.lighthouserc.json` and checks PWA/performance thresholds used by CI.
+
 ## Schema Source of Truth
 
 - The canonical schema spec is [`db/schema.models.md`](db/schema.models.md). All entity names, relationships, and naming updates must be made there first.
