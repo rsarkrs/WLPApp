@@ -115,6 +115,47 @@ test('integration: api scaffold responds on /health', async () => {
   }
 });
 
+test('integration: liveness endpoint responds and includes request id header', async () => {
+  const port = await getFreePort();
+  const { child } = await startProcess('node', ['apps/api/server.js'], 'WLPApp API listening', { env: { PORT: port } });
+
+  try {
+    const response = await fetchWithRetry(`http://127.0.0.1:${port}/health/live`);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.status, 'ok');
+    assert.equal(body.service, 'wlpapp-api');
+    assert.ok(response.headers.get('x-request-id'));
+  } finally {
+    await stopProcess(child);
+  }
+});
+
+test('integration: readiness endpoint returns dependency health details', async () => {
+  const port = await getFreePort();
+  const unreachablePort = await getFreePort();
+  const { child } = await startProcess('node', ['apps/api/server.js'], 'WLPApp API listening', {
+    env: {
+      PORT: port,
+      POSTGRES_HOST: '127.0.0.1',
+      POSTGRES_PORT: unreachablePort,
+      READINESS_TIMEOUT_MS: '120',
+    },
+  });
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${port}/health/ready`);
+    assert.equal(response.status, 503);
+    const body = await response.json();
+    assert.equal(body.status, 'not_ready');
+    assert.equal(body.dependencies.postgres.ready, false);
+    assert.equal(body.dependencies.migrations.ready, true);
+    assert.ok(body.requestId);
+  } finally {
+    await stopProcess(child);
+  }
+});
+
 
 
 test('integration: api scaffold exposes metabolic preview endpoint', async () => {
