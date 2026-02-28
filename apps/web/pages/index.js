@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 
 const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const mealSlots = ['breakfast', 'lunch', 'dinner'];
+const cuisineOptions = ['american', 'mediterranean', 'italian', 'chinese', 'korean'];
 const defaultActivity = 'moderate';
 
 function makeProfile(memberId) {
@@ -118,7 +120,8 @@ function convertProfileUnit(profile, nextUnit) {
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState('profile');
   const [profiles, setProfiles] = useState([makeProfile('member-1'), makeProfile('member-2')]);
-  const [statusMessage, setStatusMessage] = useState('Save profiles for two household members in MVP mode.');
+  const [enableSecondProfile, setEnableSecondProfile] = useState(true);
+  const [statusMessage, setStatusMessage] = useState('Save profiles and optionally enable a second person.');
   const [savedProfiles, setSavedProfiles] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [seed, setSeed] = useState(0);
@@ -128,30 +131,32 @@ export default function HomePage() {
   const [mealBank, setMealBank] = useState([]);
   const [shoppingMessage, setShoppingMessage] = useState('Generate categorized totals for unique shopping items.');
   const [shoppingRows, setShoppingRows] = useState([]);
+  const [selectedRecipeId, setSelectedRecipeId] = useState('');
   const [preferences, setPreferences] = useState({
-    cuisine: '',
+    cuisines: [],
     includeIngredient: '',
     excludeIngredient: '',
   });
 
   const apiBase = useMemo(() => '/api', []);
+  const editableProfiles = enableSecondProfile ? profiles : profiles.slice(0, 1);
 
-  const householdScale = useMemo(() => {
-    if (selectedMembers.length === 0) {
-      const primary = Number(profiles[0].targetDailyCalories || 2000);
-      return primary / 2000;
+  const activeProfiles = useMemo(() => {
+    if (selectedMembers.length > 0) {
+      return savedProfiles.filter((item) => selectedMembers.includes(item.memberId));
     }
+    return editableProfiles.map((profile) => ({
+      ...profile,
+      targetDailyCalories: Number(profile.targetDailyCalories || 2000),
+    }));
+  }, [editableProfiles, savedProfiles, selectedMembers]);
 
-    return selectedMembers.reduce((total, memberId) => {
-      const profile = savedProfiles.find((item) => item.memberId === memberId);
-      const target = Number(profile?.targetDailyCalories || 2000);
-      return total + (target / 2000);
-    }, 0);
-  }, [profiles, selectedMembers, savedProfiles]);
-
-  const recipeDetailsRows = useMemo(
-    () => weekPlan.flatMap((day) => day.meals.filter(Boolean).map((meal) => mapMealToDetail(meal, day.dayName))),
-    [weekPlan, mealBank]
+  const profileScales = useMemo(
+    () => activeProfiles.map((profile) => ({
+      memberId: profile.memberId,
+      scale: Math.max(Number(profile.targetDailyCalories || 2000), 1) / 2000,
+    })),
+    [activeProfiles]
   );
 
   function updateProfile(index, patch) {
@@ -228,16 +233,20 @@ export default function HomePage() {
       if (!response.ok) throw new Error(body.message || body.code || 'Could not load profiles');
 
       setSavedProfiles(body.items || []);
-      setSelectedMembers((body.items || []).slice(0, 2).map((item) => item.memberId));
+      setSelectedMembers((body.items || []).slice(0, enableSecondProfile ? 2 : 1).map((item) => item.memberId));
       setStatusMessage(`Loaded ${body.total} profile(s) for household ${householdId}.`);
     } catch (error) {
       setStatusMessage(error?.message === 'Failed to fetch' ? 'Unable to reach API profiles endpoint. Start `npm run start:api` and retry.' : error.message);
     }
   }
 
+  function cuisinesQuery() {
+    return preferences.cuisines.join(',');
+  }
+
   async function loadMealBank() {
     const query = new URLSearchParams();
-    if (preferences.cuisine) query.set('cuisine', preferences.cuisine);
+    if (preferences.cuisines.length > 0) query.set('cuisine', cuisinesQuery());
     if (preferences.includeIngredient) query.set('includeIngredient', preferences.includeIngredient);
     if (preferences.excludeIngredient) query.set('excludeIngredient', preferences.excludeIngredient);
 
@@ -245,25 +254,15 @@ export default function HomePage() {
     const body = await response.json();
     if (!response.ok) {
       setPlannerMessage(body.message || body.code || 'Unable to load meal bank');
-      return;
+      return [];
     }
-    setMealBank(body.items || []);
-  }
 
-  function mapMealToDetail(meal, dayName) {
-    const recipe = mealBank.find((item) => item.id === meal.recipeId);
-    return {
-      dayName,
-      recipeName: meal.recipeName,
-      slot: meal.slot,
-      macros: meal.macros,
-      ingredients: recipe?.ingredients || [],
-    };
+    setMealBank(body.items || []);
+    return body.items || [];
   }
 
   async function generatePlan(nextSeed = seed) {
     setPlannerMessage('Generating weekly planner preview...');
-
     if (mealBank.length === 0) {
       await loadMealBank();
     }
@@ -279,7 +278,7 @@ export default function HomePage() {
       requestedWeeklyLossKg: String(metric.requestedWeeklyLossKg),
     });
 
-    if (preferences.cuisine) params.set('cuisine', preferences.cuisine);
+    if (preferences.cuisines.length > 0) params.set('cuisine', cuisinesQuery());
     if (preferences.includeIngredient) params.set('includeIngredient', preferences.includeIngredient);
     if (preferences.excludeIngredient) params.set('excludeIngredient', preferences.excludeIngredient);
 
@@ -290,7 +289,13 @@ export default function HomePage() {
 
       const week = toWeekGrid(body.plan.days || []);
       setWeekPlan(week);
-      setPlannerMessage(`Planner generated with preferences. Drag cards or meal-bank items to reorganize.`);
+      const plannedRecipeIds = [...new Set(week.flatMap((day) => day.meals.filter(Boolean).map((meal) => meal.recipeId)))];
+      setSelectedRecipeId(plannedRecipeIds[0] || '');
+      setPlannerMessage(
+        plannedRecipeIds.length === 0
+          ? 'No recipes matched your current preferences. Clear filters and regenerate.'
+          : 'Planner generated with preferences. Drag cards or meal-bank items to reorganize.'
+      );
     } catch (error) {
       setPlannerMessage(error?.message === 'Failed to fetch' ? 'Unable to reach API planner endpoint. Start `npm run start:api` and retry.' : error.message);
     }
@@ -326,7 +331,7 @@ export default function HomePage() {
     if (dragSource.kind === 'bank') {
       setWeekPlan((current) => {
         const clone = current.map((day) => ({ ...day, meals: [...day.meals] }));
-        const slot = mealIndex === 0 ? 'breakfast' : mealIndex === 1 ? 'lunch' : 'dinner';
+        const slot = mealSlots[mealIndex];
         clone[dayIndex].meals[mealIndex] = {
           day: dayIndex + 1,
           slot,
@@ -342,15 +347,19 @@ export default function HomePage() {
     }
   }
 
-  function dayTotals(meals) {
-    return meals.filter(Boolean).reduce((acc, meal) => {
-      const scaled = scaleMacros(meal.macros, householdScale);
-      acc.protein += scaled.proteinG;
-      acc.fat += scaled.fatG;
-      acc.carbs += scaled.carbG;
-      acc.calories += estimateCalories(scaled);
-      return acc;
-    }, { protein: 0, fat: 0, carbs: 0, calories: 0 });
+  function dayTotalsByProfile(meals) {
+    return profileScales.map(({ memberId, scale }) => {
+      const totals = meals.filter(Boolean).reduce((acc, meal) => {
+        const scaled = scaleMacros(meal.macros, scale);
+        acc.protein += scaled.proteinG;
+        acc.fat += scaled.fatG;
+        acc.carbs += scaled.carbG;
+        acc.calories += estimateCalories(scaled);
+        return acc;
+      }, { protein: 0, fat: 0, carbs: 0, calories: 0 });
+
+      return { memberId, totals };
+    });
   }
 
   async function generateShoppingList() {
@@ -366,7 +375,7 @@ export default function HomePage() {
       requestedWeeklyLossKg: String(metric.requestedWeeklyLossKg),
     });
 
-    if (preferences.cuisine) params.set('cuisine', preferences.cuisine);
+    if (preferences.cuisines.length > 0) params.set('cuisine', cuisinesQuery());
     if (preferences.includeIngredient) params.set('includeIngredient', preferences.includeIngredient);
     if (preferences.excludeIngredient) params.set('excludeIngredient', preferences.excludeIngredient);
 
@@ -375,6 +384,7 @@ export default function HomePage() {
       const body = await response.json();
       if (!response.ok) throw new Error(body.message || body.code || 'Shopping preview failed');
 
+      const householdScale = profileScales.reduce((sum, item) => sum + item.scale, 0);
       const rows = [];
       for (const [category, items] of Object.entries(body.byCategory || {})) {
         for (const item of items) {
@@ -388,7 +398,7 @@ export default function HomePage() {
       }
 
       setShoppingRows(rows.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name)));
-      setShoppingMessage(`Generated shopping totals for ${selectedMembers.length || 1} household member(s).`);
+      setShoppingMessage(`Generated shopping totals for ${profileScales.length} active member(s).`);
     } catch (error) {
       setShoppingMessage(error?.message === 'Failed to fetch' ? 'Unable to reach API shopping endpoint. Start `npm run start:api` and retry.' : error.message);
     }
@@ -411,6 +421,16 @@ export default function HomePage() {
     URL.revokeObjectURL(url);
     setShoppingMessage('Exported shopping list JSON.');
   }
+
+  const plannedRecipeIds = useMemo(
+    () => [...new Set(weekPlan.flatMap((day) => day.meals.filter(Boolean).map((meal) => meal.recipeId)))],
+    [weekPlan]
+  );
+
+  const selectedRecipe = useMemo(() => {
+    if (!selectedRecipeId) return null;
+    return mealBank.find((item) => item.id === selectedRecipeId) || null;
+  }, [mealBank, selectedRecipeId]);
 
   function tabButton(tab, label) {
     const selected = activeTab === tab;
@@ -454,9 +474,22 @@ export default function HomePage() {
 
       {activeTab === 'profile' && (
         <section style={surfaceStyle}>
-          <h2>Profile and goal setup (2-member MVP)</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(420px, 1fr))', gap: '1rem' }}>
-            {profiles.map((profile, index) => (
+          <h2>Profile and goal setup</h2>
+          <label style={{ display: 'inline-flex', gap: '0.4rem', alignItems: 'center', marginBottom: '0.7rem' }}>
+            <input
+              type="checkbox"
+              checked={enableSecondProfile}
+              onChange={(event) => {
+                const enabled = event.target.checked;
+                setEnableSecondProfile(enabled);
+                if (!enabled) setSelectedMembers((current) => current.slice(0, 1));
+              }}
+            />
+            Enable second person
+          </label>
+
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${enableSecondProfile ? 2 : 1}, minmax(420px, 1fr))`, gap: '1rem' }}>
+            {editableProfiles.map((profile, index) => (
               <div key={profile.memberId} style={{ border: '1px solid #ccd4f0', borderRadius: '8px', padding: '0.75rem', background: 'white' }}>
                 <h3 style={{ marginTop: 0 }}>Member {index + 1} profile</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(120px, 1fr))', gap: '0.6rem' }}>
@@ -479,10 +512,11 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+
           <div style={{ marginTop: '0.75rem' }}>
             <button type="button" onClick={() => loadProfiles()}>Load saved profiles</button>
             <p aria-live="polite">{statusMessage}</p>
-            <p><strong>Members used for planner scaling (select up to two):</strong></p>
+            <p><strong>Members used for planner scaling (select up to {enableSecondProfile ? 2 : 1}):</strong></p>
             <ul>
               {savedProfiles.map((item) => (
                 <li key={item.memberId}>
@@ -493,7 +527,7 @@ export default function HomePage() {
                       onChange={() => setSelectedMembers((current) => {
                         if (current.includes(item.memberId)) return current.filter((id) => id !== item.memberId);
                         const next = [...current, item.memberId];
-                        return next.slice(0, 2);
+                        return next.slice(0, enableSecondProfile ? 2 : 1);
                       })}
                     />
                     {item.memberId} ({item.targetDailyCalories} kcal)
@@ -508,8 +542,22 @@ export default function HomePage() {
       {activeTab === 'planner' && (
         <section style={surfaceStyle}>
           <h2>Weekly planner view</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(200px, 1fr))', gap: '0.6rem', marginBottom: '0.7rem' }}>
-            <label>Preferred cuisines (comma list)<input style={{ width: '100%' }} value={preferences.cuisine} onChange={(e) => setPreferences({ ...preferences, cuisine: e.target.value })} placeholder="asian,mediterranean" /></label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(220px, 1fr))', gap: '0.6rem', marginBottom: '0.7rem' }}>
+            <label>
+              Preferred cuisines (multi-select)
+              <select
+                multiple
+                size={5}
+                style={{ width: '100%' }}
+                value={preferences.cuisines}
+                onChange={(event) => {
+                  const values = Array.from(event.target.selectedOptions).map((option) => option.value);
+                  setPreferences({ ...preferences, cuisines: values });
+                }}
+              >
+                {cuisineOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+              </select>
+            </label>
             <label>Include ingredients<input style={{ width: '100%' }} value={preferences.includeIngredient} onChange={(e) => setPreferences({ ...preferences, includeIngredient: e.target.value })} placeholder="rice,ginger" /></label>
             <label>Exclude ingredients<input style={{ width: '100%' }} value={preferences.excludeIngredient} onChange={(e) => setPreferences({ ...preferences, excludeIngredient: e.target.value })} placeholder="cheese" /></label>
           </div>
@@ -520,40 +568,41 @@ export default function HomePage() {
           </div>
           <p aria-live="polite">{plannerMessage}</p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(170px, 1fr))', gap: '0.55rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(185px, 1fr))', gap: '0.55rem' }}>
             {weekPlan.map((day, dayIndex) => {
-              const totals = dayTotals(day.meals);
+              const totalsByMember = dayTotalsByProfile(day.meals);
               return (
                 <div key={day.day} style={{ border: '1px solid #cfd7f3', borderRadius: '8px', padding: '0.45rem', background: 'white', display: 'flex', flexDirection: 'column' }}>
                   <h3 style={{ marginTop: 0, textAlign: 'center' }}>{day.dayName}</h3>
-                  {day.meals.map((meal, mealIndex) => {
-                    const cardMacros = meal ? scaleMacros(meal.macros, householdScale) : null;
-                    const calories = meal ? estimateCalories(cardMacros) : null;
-                    return (
-                      <div
-                        key={`${day.day}-${mealIndex}`}
-                        onDragOver={(event) => event.preventDefault()}
-                        onDrop={() => onDrop(dayIndex, mealIndex)}
-                        style={{ border: '1px solid #d8ddf5', minHeight: '116px', marginBottom: '0.4rem', borderRadius: '6px', padding: '0.35rem', background: '#f6f8ff' }}
-                      >
-                        {meal ? (
-                          <div draggable onDragStart={() => onDragStart({ kind: 'slot', dayIndex, mealIndex })} style={{ cursor: 'move' }}>
-                            <div style={{ fontWeight: 600 }}>{meal.recipeName}</div>
-                            <small>Cal: {calories}</small><br />
-                            <small>Protein: {cardMacros.proteinG}g</small><br />
-                            <small>Fat: {cardMacros.fatG}g</small><br />
-                            <small>Carbs: {cardMacros.carbG}g</small>
-                          </div>
-                        ) : <small style={{ color: '#7b8199' }}>Drop meal here</small>}
-                      </div>
-                    );
-                  })}
+                  {day.meals.map((meal, mealIndex) => (
+                    <div
+                      key={`${day.day}-${mealIndex}`}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={() => onDrop(dayIndex, mealIndex)}
+                      style={{ border: '1px solid #d8ddf5', height: '132px', marginBottom: '0.4rem', borderRadius: '6px', padding: '0.35rem', background: '#f6f8ff', overflow: 'auto' }}
+                    >
+                      {meal ? (
+                        <div draggable onDragStart={() => onDragStart({ kind: 'slot', dayIndex, mealIndex })} style={{ cursor: 'move' }}>
+                          <div style={{ fontWeight: 600 }}>{meal.recipeName}</div>
+                          {profileScales.map((item) => {
+                            const macros = scaleMacros(meal.macros, item.scale);
+                            return (
+                              <small key={`${meal.recipeId}-${item.memberId}`} style={{ display: 'block' }}>
+                                {item.memberId}: {estimateCalories(macros)} cal • P {macros.proteinG}g • F {macros.fatG}g • C {macros.carbG}g
+                              </small>
+                            );
+                          })}
+                        </div>
+                      ) : <small style={{ color: '#7b8199' }}>Drop meal here</small>}
+                    </div>
+                  ))}
                   <div style={{ marginTop: 'auto', borderTop: '1px solid #d8ddf5', paddingTop: '0.35rem' }}>
-                    <small><strong>Daily total</strong></small><br />
-                    <small>Cal: {totals.calories}</small><br />
-                    <small>Protein: {totals.protein}g</small><br />
-                    <small>Fat: {totals.fat}g</small><br />
-                    <small>Carbs: {totals.carbs}g</small>
+                    <small><strong>Daily totals</strong></small>
+                    {totalsByMember.map((member) => (
+                      <small key={member.memberId} style={{ display: 'block' }}>
+                        {member.memberId}: {member.totals.calories} cal • P {member.totals.protein}g • F {member.totals.fat}g • C {member.totals.carbs}g
+                      </small>
+                    ))}
                   </div>
                 </div>
               );
@@ -562,7 +611,7 @@ export default function HomePage() {
 
           <h3>Meal bank (drag into planner)</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(240px, 1fr))', gap: '0.55rem' }}>
-            {['breakfast', 'lunch', 'dinner'].map((slot) => (
+            {mealSlots.map((slot) => (
               <div key={slot} style={{ border: '1px solid #ccd4f0', borderRadius: '8px', padding: '0.5rem', background: 'white' }}>
                 <strong style={{ textTransform: 'capitalize' }}>{slot}</strong>
                 {mealBank.filter((item) => item.mealType === slot).map((recipe) => (
@@ -579,22 +628,61 @@ export default function HomePage() {
 
       {activeTab === 'recipes' && (
         <section style={surfaceStyle}>
-          <h2>Recipes chosen for the planner</h2>
-          <p>This tab lists the selected meals and their ingredient details.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(360px, 1fr))', gap: '0.7rem' }}>
-            {recipeDetailsRows.map((row, index) => (
-              <div key={`${row.dayName}-${row.recipeName}-${index}`} style={{ border: '1px solid #ccd4f0', borderRadius: '8px', padding: '0.6rem', background: 'white' }}>
-                <div><strong>{row.dayName}</strong> • {row.slot}</div>
-                <div style={{ fontWeight: 600 }}>{row.recipeName}</div>
-                <small>Protein {row.macros.proteinG}g • Fat {row.macros.fatG}g • Carbs {row.macros.carbG}g</small>
-                <ul style={{ marginBottom: 0 }}>
-                  {row.ingredients.map((ingredient) => (
-                    <li key={`${row.recipeName}-${ingredient.name}`}>{ingredient.name}: {ingredient.qty} {ingredient.unit}</li>
+          <h2>Recipes used</h2>
+          <p>Select one planned recipe to view quantities and instructions.</p>
+          <label>
+            Planned meals
+            <select value={selectedRecipeId} onChange={(event) => setSelectedRecipeId(event.target.value)} style={{ marginLeft: '0.6rem' }}>
+              <option value="">Select a recipe</option>
+              {plannedRecipeIds.map((recipeId) => {
+                const recipe = mealBank.find((item) => item.id === recipeId);
+                return <option key={recipeId} value={recipeId}>{recipe?.name || recipeId}</option>;
+              })}
+            </select>
+          </label>
+
+          {selectedRecipe && (
+            <div style={{ marginTop: '0.8rem', border: '1px solid #ccd4f0', borderRadius: '8px', background: 'white', padding: '0.8rem' }}>
+              <h3 style={{ marginTop: 0 }}>{selectedRecipe.name}</h3>
+              <p><strong>Base macros:</strong> {estimateCalories(selectedRecipe.macros)} cal • P {selectedRecipe.macros.proteinG}g • F {selectedRecipe.macros.fatG}g • C {selectedRecipe.macros.carbG}g</p>
+
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #ccd4f0', padding: '0.35rem' }}>Ingredient</th>
+                    <th style={{ textAlign: 'right', borderBottom: '1px solid #ccd4f0', padding: '0.35rem' }}>Base Qty</th>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #ccd4f0', padding: '0.35rem' }}>Unit</th>
+                    {profileScales.map((profile) => (
+                      <th key={profile.memberId} style={{ textAlign: 'right', borderBottom: '1px solid #ccd4f0', padding: '0.35rem' }}>{profile.memberId} Qty</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedRecipe.ingredients.map((ingredient) => (
+                    <tr key={`${selectedRecipe.id}-${ingredient.name}`}>
+                      <td style={{ borderBottom: '1px solid #eef1ff', padding: '0.35rem' }}>{ingredient.name}</td>
+                      <td style={{ borderBottom: '1px solid #eef1ff', padding: '0.35rem', textAlign: 'right' }}>{ingredient.qty}</td>
+                      <td style={{ borderBottom: '1px solid #eef1ff', padding: '0.35rem' }}>{ingredient.unit}</td>
+                      {profileScales.map((profile) => (
+                        <td key={`${profile.memberId}-${ingredient.name}`} style={{ borderBottom: '1px solid #eef1ff', padding: '0.35rem', textAlign: 'right' }}>
+                          {Number((ingredient.qty * profile.scale).toFixed(2))}
+                        </td>
+                      ))}
+                    </tr>
                   ))}
-                </ul>
+                </tbody>
+              </table>
+
+              <div>
+                <strong>Instructions</strong>
+                <ol>
+                  {(selectedRecipe.instructions || ['Cook proteins and grains, combine with vegetables, and season to taste.']).map((step, index) => (
+                    <li key={`${selectedRecipe.id}-step-${index}`}>{step}</li>
+                  ))}
+                </ol>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </section>
       )}
 

@@ -76,6 +76,10 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Add planner preference filters for cuisines plus include/exclude ingredients and wire through API preview generation.
 - [x] Add recipes-used tab showing selected planner meals with ingredient details.
 - [x] Expand lunch/dinner recipe variety with chinese/italian/korean options for better weekly diversity.
+- [x] Add option to enable/disable second person in Profile and Goals and enforce member selection limits accordingly.
+- [x] Replace planner cuisine text input with multi-select dropdown and harden filter handling so Generate Plan degrades gracefully when filters are too strict.
+- [x] Show per-member scaled calories/macros in planner meal cards and daily totals when one or two profiles are active.
+- [x] Update Recipes Used to a unique recipe selector with ingredient quantities and step-by-step instructions.
 
 ## Phase 11 — Dedicated QA & Release Readiness
 - [ ] Enforce pre-deploy QA gate for release candidates.

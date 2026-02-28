@@ -153,6 +153,60 @@ const seedRecipes = [
   },
 ];
 
+
+const instructionByRecipeId = {
+  'r-oats-bowl': [
+    'Cook oats in milk until creamy.',
+    'Stir in chia seeds and top with berries before serving.'
+  ],
+  'r-egg-wrap': [
+    'Scramble eggs in a pan and warm the tortilla.',
+    'Fill with eggs, spinach, and cheese, then fold and serve.'
+  ],
+  'r-greek-chicken': [
+    'Season and sear chicken until cooked through.',
+    'Serve with rice, cucumber, and tomato, then drizzle olive oil.'
+  ],
+  'r-turkey-sandwich': [
+    'Layer turkey, avocado, lettuce, and tomato on bread.',
+    'Slice and serve immediately.'
+  ],
+  'r-beef-rice-bowl': [
+    'Brown beef in a skillet and cook rice separately.',
+    'Serve with carrot and broccoli, then finish with soy sauce.'
+  ],
+  'r-tofu-stirfry': [
+    'Stir-fry tofu until lightly crisp.',
+    'Add vegetables, ginger, and soy sauce, then serve over rice.'
+  ],
+  'r-salmon-potatoes': [
+    'Roast salmon and potatoes until tender.',
+    'Serve with asparagus and lemon with olive oil drizzle.'
+  ],
+  'r-chicken-pasta': [
+    'Cook pasta and sauté chicken until done.',
+    'Toss with vegetables and olive oil, then serve warm.'
+  ],
+  'r-korean-bulgogi-bowl': [
+    'Sear beef with sesame oil in a hot pan.',
+    'Serve over rice with kimchi and sliced scallion.'
+  ],
+  'r-chinese-ginger-chicken': [
+    'Cook chicken with ginger and garlic until browned.',
+    'Serve with rice and bok choy.'
+  ],
+  'r-italian-turkey-meatballs': [
+    'Form turkey meatballs and bake or pan-sear until cooked.',
+    'Simmer in tomato sauce and serve over pasta with basil.'
+  ],
+};
+
+for (const recipe of seedRecipes) {
+  if (!recipe.instructions) {
+    recipe.instructions = instructionByRecipeId[recipe.id] || ['Prepare ingredients, cook thoroughly, and serve warm.'];
+  }
+}
+
 function normalizeToken(value) {
   return String(value || '').trim().toLowerCase();
 }
