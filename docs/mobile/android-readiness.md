@@ -19,8 +19,8 @@ WLPApp currently ships as web + API scaffolds. To support a Google Play distribu
    - Define offline-first behavior for profile/plan editing and sync conflict strategy.
    - Add explicit user messaging when API is unavailable.
 4. **Packaging/distribution path**
-   - Decide between TWA wrapper vs native shell and document signing/release flow.
-   - Add CI job to build/sign release artifacts for selected path.
+   - Selected path: **TWA wrapper** (see `docs/mobile/android-release-path.md`).
+   - Baseline signing workflow: `.github/workflows/android-release-baseline.yml`.
 5. **Policy/compliance**
    - Provide privacy policy and data deletion flow.
    - Complete Play Data Safety declarations.
@@ -29,3 +29,7 @@ WLPApp currently ships as web + API scaffolds. To support a Google Play distribu
 1. Add a dedicated `Phase 13` track in the plan for mobile packaging and compliance deliverables.
 2. Add Lighthouse PWA quality checks to CI for installability/regression checks (current baseline threshold: PWA >= 0.6 while installability hardening is in progress).
 3. Implement provider-backed telemetry and error monitoring for production mobile sessions.
+
+## Execution guides
+- Android Studio testing: `docs/mobile/android-studio-testing.md`
+- Play Store submission: `docs/mobile/play-store-submission-runbook.md`
