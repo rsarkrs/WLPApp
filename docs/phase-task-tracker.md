@@ -86,7 +86,7 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 
 ## Phase 11 — Dedicated QA & Release Readiness
 - [x] Enforce pre-deploy QA gate for release candidates.
-- [ ] Validate coverage thresholds for core engine modules.
+- [x] Validate coverage thresholds for core engine modules.
 - [x] Capture test evidence and release readiness checklist artifacts.
 
 ## Phase 12 — Production Readiness & Deployment
