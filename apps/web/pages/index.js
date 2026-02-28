@@ -81,7 +81,13 @@ function cmToFtIn(cm) {
 function weekAverageCalories(weekPlan, scale) {
   const daysWithMeals = weekPlan.filter((day) => day.meals.some(Boolean));
   if (daysWithMeals.length === 0) return 0;
-  const total = daysWithMeals.reduce((sum, day) => sum + dayTotalsForScale(day.meals, scale).calories, 0);
+  const total = daysWithMeals.reduce((sum, day) => {
+    const dayCalories = (day.meals || []).filter(Boolean).reduce((mealSum, meal) => {
+      const scaled = scaleMacros(meal.macros, scale);
+      return mealSum + estimateCalories(scaled);
+    }, 0);
+    return sum + dayCalories;
+  }, 0);
   return total / daysWithMeals.length;
 }
 
