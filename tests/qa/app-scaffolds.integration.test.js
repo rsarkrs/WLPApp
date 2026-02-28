@@ -385,3 +385,23 @@ test('integration: web scaffold renders Next.js landing page', async () => {
     await stopProcess(child);
   }
 });
+
+
+test('integration: web scaffold exposes PWA manifest metadata', async () => {
+  const port = await getFreePort();
+  const nextBin = path.join(process.cwd(), 'node_modules', '.bin', 'next');
+  const { child } = await startProcess(nextBin, ['dev', '-p', port], 'Ready in', { cwd: path.join(process.cwd(), 'apps/web') });
+
+  try {
+    const manifestResponse = await fetchWithRetry(`http://127.0.0.1:${port}/manifest.webmanifest`);
+    assert.equal(manifestResponse.status, 200);
+
+    const manifest = await manifestResponse.json();
+    assert.equal(manifest.short_name, 'WLPApp');
+    assert.equal(manifest.display, 'standalone');
+    assert.ok(Array.isArray(manifest.icons));
+    assert.ok(manifest.icons.some((icon) => icon.src === '/icons/icon-192.svg'));
+  } finally {
+    await stopProcess(child);
+  }
+});

@@ -94,3 +94,10 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Add liveness/readiness endpoints with dependency checks.
 - [x] Define metrics/alerts/runbooks for planner, importer, and DB.
 - [x] Configure production deployment and secure environment variables.
+
+
+## Phase 13 — Mobile Productization (Android/Play Store)
+- [x] Establish baseline PWA packaging assets (manifest, app icons, service worker registration).
+- [x] Document Android readiness gaps and release constraints for Play Store distribution.
+- [ ] Add CI quality gates for mobile installability/performance (e.g., Lighthouse PWA checks).
+- [ ] Select packaging path (TWA vs native shell) and define signed release pipeline.
