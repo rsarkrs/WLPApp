@@ -56,7 +56,7 @@ const seedRecipes = [
   {
     id: 'r-beef-rice-bowl',
     name: 'Beef Rice Bowl',
-    cuisine: 'asian',
+    cuisine: 'korean',
     mealType: 'lunch',
     macros: { proteinG: 42, fatG: 19, carbG: 48 },
     ingredients: [
@@ -70,7 +70,7 @@ const seedRecipes = [
   {
     id: 'r-tofu-stirfry',
     name: 'Tofu Veggie Stir Fry',
-    cuisine: 'asian',
+    cuisine: 'chinese',
     mealType: 'dinner',
     macros: { proteinG: 30, fatG: 16, carbG: 40 },
     ingredients: [
@@ -98,7 +98,7 @@ const seedRecipes = [
   {
     id: 'r-chicken-pasta',
     name: 'Chicken Pasta Primavera',
-    cuisine: 'mediterranean',
+    cuisine: 'italian',
     mealType: 'dinner',
     macros: { proteinG: 44, fatG: 15, carbG: 54 },
     ingredients: [
@@ -107,6 +107,48 @@ const seedRecipes = [
       { name: 'zucchini', qty: 120, unit: 'g', category: 'veggies' },
       { name: 'bell pepper', qty: 100, unit: 'g', category: 'veggies' },
       { name: 'olive oil', qty: 15, unit: 'ml', category: 'pantry' },
+    ]
+  },
+  {
+    id: 'r-korean-bulgogi-bowl',
+    name: 'Korean Bulgogi Bowl',
+    cuisine: 'korean',
+    mealType: 'dinner',
+    macros: { proteinG: 46, fatG: 17, carbG: 47 },
+    ingredients: [
+      { name: 'beef sirloin', qty: 220, unit: 'g', category: 'protein' },
+      { name: 'rice', qty: 180, unit: 'g', category: 'grains' },
+      { name: 'kimchi', qty: 90, unit: 'g', category: 'veggies' },
+      { name: 'sesame oil', qty: 10, unit: 'ml', category: 'pantry' },
+      { name: 'scallion', qty: 30, unit: 'g', category: 'veggies' },
+    ]
+  },
+  {
+    id: 'r-chinese-ginger-chicken',
+    name: 'Chinese Ginger Chicken',
+    cuisine: 'chinese',
+    mealType: 'lunch',
+    macros: { proteinG: 43, fatG: 13, carbG: 45 },
+    ingredients: [
+      { name: 'chicken thigh', qty: 210, unit: 'g', category: 'protein' },
+      { name: 'ginger', qty: 12, unit: 'g', category: 'pantry' },
+      { name: 'garlic', qty: 8, unit: 'g', category: 'pantry' },
+      { name: 'rice', qty: 165, unit: 'g', category: 'grains' },
+      { name: 'bok choy', qty: 150, unit: 'g', category: 'veggies' },
+    ]
+  },
+  {
+    id: 'r-italian-turkey-meatballs',
+    name: 'Italian Turkey Meatballs',
+    cuisine: 'italian',
+    mealType: 'dinner',
+    macros: { proteinG: 48, fatG: 14, carbG: 41 },
+    ingredients: [
+      { name: 'ground turkey', qty: 220, unit: 'g', category: 'protein' },
+      { name: 'tomato sauce', qty: 120, unit: 'ml', category: 'veggies' },
+      { name: 'whole wheat pasta', qty: 150, unit: 'g', category: 'grains' },
+      { name: 'basil', qty: 8, unit: 'g', category: 'veggies' },
+      { name: 'olive oil', qty: 10, unit: 'ml', category: 'pantry' },
     ]
   },
 ];
@@ -155,18 +197,26 @@ function parseIngredientList(value) {
     .filter(Boolean);
 }
 
+function parseTokenList(value) {
+  if (!value) return [];
+  return String(value)
+    .split(',')
+    .map((part) => normalizeToken(part))
+    .filter(Boolean);
+}
+
 function filterRecipes(recipes, query = {}) {
-  const cuisine = normalizeToken(query.cuisine);
-  const mealType = normalizeToken(query.mealType);
+  const cuisines = parseTokenList(query.cuisine);
+  const mealTypes = parseTokenList(query.mealType);
   const includeIngredients = parseIngredientList(query.includeIngredient);
   const excludeIngredients = parseIngredientList(query.excludeIngredient);
 
   return recipes.filter((recipe) => {
-    if (cuisine && normalizeToken(recipe.cuisine) !== cuisine) {
+    if (cuisines.length > 0 && !cuisines.includes(normalizeToken(recipe.cuisine))) {
       return false;
     }
 
-    if (mealType && normalizeToken(recipe.mealType) !== mealType) {
+    if (mealTypes.length > 0 && !mealTypes.includes(normalizeToken(recipe.mealType))) {
       return false;
     }
 

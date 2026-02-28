@@ -34,8 +34,8 @@ function summarizeMacros(meals, divisor) {
   };
 }
 
-function planWeek({ recipes, seed = 0, days = 7, mealType, cuisine, targetMacros }) {
-  const filtered = filterRecipes(recipes, { mealType, cuisine });
+function planWeek({ recipes, seed = 0, days = 7, mealType, cuisine, includeIngredient, excludeIngredient, targetMacros }) {
+  const filtered = filterRecipes(recipes, { mealType, cuisine, includeIngredient, excludeIngredient });
 
   if (filtered.length === 0) {
     return {
@@ -78,7 +78,7 @@ function planWeek({ recipes, seed = 0, days = 7, mealType, cuisine, targetMacros
   };
 }
 
-function planWeekByMeals({ recipes, seed = 0, days = 7, cuisine, targetMacros }) {
+function planWeekByMeals({ recipes, seed = 0, days = 7, cuisine, includeIngredient, excludeIngredient, targetMacros }) {
   const slots = ['breakfast', 'lunch', 'dinner'];
   const daysResult = [];
   const debug = [];
@@ -86,7 +86,7 @@ function planWeekByMeals({ recipes, seed = 0, days = 7, cuisine, targetMacros })
   for (let dayIndex = 0; dayIndex < days; dayIndex += 1) {
     const dayMeals = [];
     for (const [slotIndex, slot] of slots.entries()) {
-      const filtered = filterRecipes(recipes, { mealType: slot, cuisine });
+      const filtered = filterRecipes(recipes, { mealType: slot, cuisine, includeIngredient, excludeIngredient });
       if (filtered.length === 0) {
         debug.push({ step: 'filter', details: { slot, cuisine, matchedCount: 0, day: dayIndex + 1 } });
         continue;
@@ -128,14 +128,14 @@ function planWeekByMeals({ recipes, seed = 0, days = 7, cuisine, targetMacros })
   };
 }
 
-function buildPlanningPreview({ recipes, seed = 0, days = 7, mealType, cuisine, sex, dailyCalories, weightKg, requestedWeeklyLossKg }) {
+function buildPlanningPreview({ recipes, seed = 0, days = 7, mealType, cuisine, includeIngredient, excludeIngredient, sex, dailyCalories, weightKg, requestedWeeklyLossKg }) {
   const calorie = applyCalorieFloor({ sex, proposedDailyCalories: dailyCalories });
   const weeklyCap = applyWeeklyCap({ currentWeightKg: weightKg, requestedWeeklyLossKg });
   const targetMacros = allocateMacros({ dailyCalories: calorie.finalDailyCalories, weightKg });
 
   const plan = mealType
-    ? planWeek({ recipes, seed, days, mealType, cuisine, targetMacros })
-    : planWeekByMeals({ recipes, seed, days, cuisine, targetMacros });
+    ? planWeek({ recipes, seed, days, mealType, cuisine, includeIngredient, excludeIngredient, targetMacros })
+    : planWeekByMeals({ recipes, seed, days, cuisine, includeIngredient, excludeIngredient, targetMacros });
 
   return {
     plan,
