@@ -1,4 +1,6 @@
 const express = require('express');
+const net = require('node:net');
+const crypto = require('node:crypto');
 const { computeBmrTdee } = require('../../src/domain/metabolicEngine');
 const { seedRecipes, filterRecipes, validateRecipe } = require('../../src/catalog/recipes');
 const { buildPlanningPreview } = require('../../src/planner/engine');
@@ -10,8 +12,87 @@ const app = express();
 app.use(express.json());
 const port = Number(process.env.PORT || 4000);
 
+const readinessConfig = {
+  dbHost: process.env.POSTGRES_HOST || process.env.DB_HOST || '127.0.0.1',
+  dbPort: Number(process.env.POSTGRES_PORT || process.env.DB_PORT || 5432),
+  timeoutMs: Number(process.env.READINESS_TIMEOUT_MS || 250),
+};
+
+function requestIdFromHeaders(headers) {
+  return headers['x-request-id'] || headers['x-correlation-id'] || crypto.randomUUID();
+}
+
+function checkPostgresReady({ host, port: dbPort, timeoutMs }) {
+  return new Promise((resolve) => {
+    const socket = net.createConnection({ host, port: dbPort });
+
+    let settled = false;
+    const done = (ready, details) => {
+      if (settled) return;
+      settled = true;
+      socket.destroy();
+      resolve({ ready, details });
+    };
+
+    socket.setTimeout(timeoutMs, () => done(false, 'timeout'));
+    socket.on('connect', () => done(true, 'connected'));
+    socket.on('error', (error) => done(false, error.code || 'connection_error'));
+  });
+}
+
+app.use((req, res, next) => {
+  const requestId = requestIdFromHeaders(req.headers);
+  res.setHeader('x-request-id', requestId);
+  req.requestId = requestId;
+
+  const started = Date.now();
+  res.on('finish', () => {
+    const durationMs = Date.now() - started;
+    console.log(JSON.stringify({
+      level: 'info',
+      requestId,
+      method: req.method,
+      path: req.path,
+      statusCode: res.statusCode,
+      durationMs,
+    }));
+  });
+  next();
+});
+
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok', service: 'wlpapp-api' });
+});
+
+app.get('/health/live', (req, res) => {
+  res.status(200).json({ status: 'ok', service: 'wlpapp-api', requestId: req.requestId });
+});
+
+app.get('/health/ready', async (req, res) => {
+  const dbCheck = await checkPostgresReady({
+    host: readinessConfig.dbHost,
+    port: readinessConfig.dbPort,
+    timeoutMs: readinessConfig.timeoutMs,
+  });
+
+  const ready = dbCheck.ready;
+  return res.status(ready ? 200 : 503).json({
+    status: ready ? 'ready' : 'not_ready',
+    service: 'wlpapp-api',
+    dependencies: {
+      postgres: {
+        host: readinessConfig.dbHost,
+        port: readinessConfig.dbPort,
+        ready: dbCheck.ready,
+        details: dbCheck.details,
+      },
+      migrations: {
+        ready: true,
+        status: 'not_applicable_for_scaffold',
+      },
+    },
+    requestId: req.requestId,
+  });
 });
 
 app.get('/v1/metabolic/preview', (req, res) => {
@@ -285,7 +366,7 @@ app.get('/v1/plans/preview', (req, res) => {
 app.get('/', (_req, res) => {
   res.status(200).json({
     name: 'WLPApp API scaffold',
-    endpoints: ['/health', '/v1/profile', '/v1/profiles', '/v1/imports', '/v1/metabolic/preview', '/v1/recipes', '/v1/plans/preview', '/v1/plans/generate', '/v1/shopping/preview']
+    endpoints: ['/health', '/health/live', '/health/ready', '/v1/profile', '/v1/profiles', '/v1/imports', '/v1/metabolic/preview', '/v1/recipes', '/v1/plans/preview', '/v1/plans/generate', '/v1/shopping/preview']
   });
 });
 
