@@ -78,6 +78,8 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Expand lunch/dinner recipe variety with chinese/italian/korean options for better weekly diversity.
 - [x] Add option to enable/disable second person in Profile and Goals and enforce member selection limits accordingly.
 - [x] Replace planner cuisine text input with multi-select dropdown and harden filter handling so Generate Plan degrades gracefully when filters are too strict.
+- [x] Replace free-text ingredient filters with ingredient exclusion multi-select sourced from meal-bank ingredients.
+- [x] Enforce whole-number quantities for `item` units across planner recipe scaling and shopping outputs.
 - [x] Show per-member scaled calories/macros in planner meal cards and daily totals when one or two profiles are active.
 - [x] Update Recipes Used to a unique recipe selector with ingredient quantities and step-by-step instructions.
 

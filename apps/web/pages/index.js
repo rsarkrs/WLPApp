@@ -134,8 +134,7 @@ export default function HomePage() {
   const [selectedRecipeId, setSelectedRecipeId] = useState('');
   const [preferences, setPreferences] = useState({
     cuisines: [],
-    includeIngredient: '',
-    excludeIngredient: '',
+    excludedIngredients: [],
   });
 
   const apiBase = useMemo(() => '/api', []);
@@ -247,8 +246,7 @@ export default function HomePage() {
   async function loadMealBank() {
     const query = new URLSearchParams();
     if (preferences.cuisines.length > 0) query.set('cuisine', cuisinesQuery());
-    if (preferences.includeIngredient) query.set('includeIngredient', preferences.includeIngredient);
-    if (preferences.excludeIngredient) query.set('excludeIngredient', preferences.excludeIngredient);
+    if (preferences.excludedIngredients.length > 0) query.set('excludeIngredient', preferences.excludedIngredients.join(','));
 
     const response = await fetch(`${apiBase}/v1/recipes?${query.toString()}`);
     const body = await response.json();
@@ -279,8 +277,7 @@ export default function HomePage() {
     });
 
     if (preferences.cuisines.length > 0) params.set('cuisine', cuisinesQuery());
-    if (preferences.includeIngredient) params.set('includeIngredient', preferences.includeIngredient);
-    if (preferences.excludeIngredient) params.set('excludeIngredient', preferences.excludeIngredient);
+    if (preferences.excludedIngredients.length > 0) params.set('excludeIngredient', preferences.excludedIngredients.join(','));
 
     try {
       const response = await fetch(`${apiBase}/v1/plans/preview?${params.toString()}`);
@@ -376,8 +373,7 @@ export default function HomePage() {
     });
 
     if (preferences.cuisines.length > 0) params.set('cuisine', cuisinesQuery());
-    if (preferences.includeIngredient) params.set('includeIngredient', preferences.includeIngredient);
-    if (preferences.excludeIngredient) params.set('excludeIngredient', preferences.excludeIngredient);
+    if (preferences.excludedIngredients.length > 0) params.set('excludeIngredient', preferences.excludedIngredients.join(','));
 
     try {
       const response = await fetch(`${apiBase}/v1/shopping/preview?${params.toString()}`);
@@ -391,7 +387,7 @@ export default function HomePage() {
           rows.push({
             category,
             name: item.name,
-            qty: Number((item.qty * householdScale).toFixed(2)),
+            qty: normalizeQtyForUnit(item.qty * householdScale, item.unit),
             unit: item.unit,
           });
         }
@@ -431,6 +427,19 @@ export default function HomePage() {
     if (!selectedRecipeId) return null;
     return mealBank.find((item) => item.id === selectedRecipeId) || null;
   }, [mealBank, selectedRecipeId]);
+
+  const ingredientOptions = useMemo(
+    () => [...new Set(mealBank.flatMap((recipe) => recipe.ingredients.map((ingredient) => ingredient.name)))].sort((a, b) => a.localeCompare(b)),
+    [mealBank]
+  );
+
+  function normalizeQtyForUnit(qty, unit) {
+    if (unit === 'item') {
+      return Math.max(1, Math.round(qty));
+    }
+    return Number(qty.toFixed(2));
+  }
+
 
   function tabButton(tab, label) {
     const selected = activeTab === tab;
@@ -558,8 +567,24 @@ export default function HomePage() {
                 {cuisineOptions.map((option) => <option key={option} value={option}>{option}</option>)}
               </select>
             </label>
-            <label>Include ingredients<input style={{ width: '100%' }} value={preferences.includeIngredient} onChange={(e) => setPreferences({ ...preferences, includeIngredient: e.target.value })} placeholder="rice,ginger" /></label>
-            <label>Exclude ingredients<input style={{ width: '100%' }} value={preferences.excludeIngredient} onChange={(e) => setPreferences({ ...preferences, excludeIngredient: e.target.value })} placeholder="cheese" /></label>
+            <label>
+              Exclude ingredients (multi-select)
+              <select
+                multiple
+                size={6}
+                style={{ width: '100%' }}
+                value={preferences.excludedIngredients}
+                onChange={(event) => {
+                  const values = Array.from(event.target.selectedOptions).map((option) => option.value);
+                  setPreferences({ ...preferences, excludedIngredients: values });
+                }}
+              >
+                {ingredientOptions.map((ingredient) => <option key={ingredient} value={ingredient}>{ingredient}</option>)}
+              </select>
+            </label>
+            <div style={{ fontSize: '0.9rem', color: '#5b6075' }}>
+              Load meal bank first to populate ingredient options.
+            </div>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.6rem' }}>
             <button type="button" onClick={() => generatePlan()}>Generate plan</button>
@@ -665,7 +690,7 @@ export default function HomePage() {
                       <td style={{ borderBottom: '1px solid #eef1ff', padding: '0.35rem' }}>{ingredient.unit}</td>
                       {profileScales.map((profile) => (
                         <td key={`${profile.memberId}-${ingredient.name}`} style={{ borderBottom: '1px solid #eef1ff', padding: '0.35rem', textAlign: 'right' }}>
-                          {Number((ingredient.qty * profile.scale).toFixed(2))}
+                          {normalizeQtyForUnit(ingredient.qty * profile.scale, ingredient.unit)}
                         </td>
                       ))}
                     </tr>
