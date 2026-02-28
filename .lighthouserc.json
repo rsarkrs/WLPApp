@@ -1,7 +1,7 @@
 {
   "ci": {
     "collect": {
-      "startServerCommand": "npm exec --workspace @wlpapp/web next start -p 3000",
+      "startServerCommand": "cd apps/web && npx next start -p 3000",
       "startServerReadyPattern": "http://localhost:3000",
       "numberOfRuns": 1,
       "url": [
