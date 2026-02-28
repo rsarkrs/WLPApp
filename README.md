@@ -269,6 +269,7 @@ Constraint-based meal planning application focused on metabolic safety, macro ad
 - Add integration tests for weekly plan generation and shopping-list aggregation behavior.
 - Add API contract tests validating frontend/backend request-response compatibility.
 - Enforce CI coverage thresholds for core engine modules before deployment.
+- Run `npm run qa:release` before a release candidate to execute the QA bundle and generate `artifacts/release-readiness-checklist.md`.
 
 ### Phase 12: Production Readiness & Deployment
 - Add structured logging with request correlation IDs propagated across API, planner jobs, and import workers.
