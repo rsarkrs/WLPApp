@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { seedRecipes } = require('../../src/catalog/recipes');
-const { seededIndex, planWeek, buildPlanningPreview } = require('../../src/planner/engine');
+const { seededIndex, planWeek, planWeekByMeals, buildPlanningPreview } = require('../../src/planner/engine');
 
 test('planner engine: seededIndex remains in-bounds for negative seeds', () => {
   const idx = seededIndex(-41, 2, 3);
@@ -45,6 +45,31 @@ test('planner engine: fallback is set when macro error exceeds tolerance', () =>
   assert.equal(result.fallbackReasonCode, 'ERR_MACRO_MATCH_NOT_FOUND');
 });
 
+
+
+test('planner engine: does not set fallback when macro error is within tolerance', () => {
+  const baseline = planWeek({
+    recipes: seedRecipes,
+    seed: 42,
+    days: 7,
+    mealType: 'breakfast',
+    cuisine: 'american',
+    targetMacros: { proteinG: 0, fatG: 0, carbG: 0 },
+  });
+
+  const result = planWeek({
+    recipes: seedRecipes,
+    seed: 42,
+    days: 7,
+    mealType: 'breakfast',
+    cuisine: 'american',
+    targetMacros: baseline.averageMacros,
+  });
+
+  assert.equal(result.fallbackApplied, false);
+  assert.equal(result.fallbackReasonCode, null);
+});
+
 test('planner engine: returns no-results fallback when filters remove all recipes', () => {
   const result = planWeek({
     recipes: seedRecipes,
@@ -78,6 +103,24 @@ test('planner engine: planning preview enforces safety constraints', () => {
   assert.ok(preview.plan.debug.length >= 2);
 });
 
+
+
+
+test('planner engine: meal-slot planner returns no-results fallback when all slot filters miss', () => {
+  const result = planWeekByMeals({
+    recipes: seedRecipes,
+    seed: 3,
+    days: 3,
+    cuisine: 'not-a-cuisine',
+    includeIngredient: 'dragonfruit',
+    targetMacros: { proteinG: 20, fatG: 10, carbG: 30 },
+  });
+
+  assert.equal(result.meals.length, 0);
+  assert.equal(result.fallbackApplied, true);
+  assert.equal(result.fallbackReasonCode, 'ERR_NO_RECIPES_MATCH_FILTERS');
+  assert.ok(result.debug.some((entry) => entry.step === 'filter'));
+});
 
 test('planner engine: include and exclude ingredient preferences are applied', () => {
   const result = buildPlanningPreview({
