@@ -125,3 +125,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Define explicit go/no-go criteria for Play Store launch.
 - [x] Add Android launch-readiness gate workflow for tagged release candidates.
 - [x] Add script to validate required launch/compliance documentation presence.
+
+
+## Phase 18 — Android Release Preflight Automation
+- [x] Replace Android release placeholder workflow with executable preflight steps.
+- [x] Add automated preflight script that validates signing secrets and required launch docs.
+- [x] Add automated test coverage for Android preflight script behavior.
