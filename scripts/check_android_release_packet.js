@@ -55,6 +55,31 @@ if (packet.ciRunAttempt !== null && packet.ciRunAttempt !== undefined && !/^\d+$
 
 
 
+
+if (packet.ciWorkflow !== null && packet.ciWorkflow !== undefined && String(packet.ciWorkflow).trim().length === 0) {
+  fail('ciWorkflow must be non-empty when present');
+}
+
+if (packet.ciRunNumber !== null && packet.ciRunNumber !== undefined && !/^\d+$/.test(String(packet.ciRunNumber))) {
+  fail('ciRunNumber must be numeric when present');
+}
+
+const expectedCiWorkflow = (process.env.ANDROID_RELEASE_EXPECTED_CI_WORKFLOW || '').trim();
+if (expectedCiWorkflow && String(packet.ciWorkflow || '') !== expectedCiWorkflow) {
+  fail(`ciWorkflow mismatch: expected ${expectedCiWorkflow}, got ${packet.ciWorkflow}`);
+}
+
+const expectedCiRunNumber = (process.env.ANDROID_RELEASE_EXPECTED_CI_RUN_NUMBER || '').trim();
+if (expectedCiRunNumber) {
+  if (!/^\d+$/.test(expectedCiRunNumber)) {
+    fail('ANDROID_RELEASE_EXPECTED_CI_RUN_NUMBER must be numeric when provided');
+  }
+
+  if (String(packet.ciRunNumber || '') !== expectedCiRunNumber) {
+    fail(`ciRunNumber mismatch: expected ${expectedCiRunNumber}, got ${packet.ciRunNumber}`);
+  }
+}
+
 const expectedCiRunId = (process.env.ANDROID_RELEASE_EXPECTED_CI_RUN_ID || '').trim();
 if (expectedCiRunId) {
   if (!/^\d+$/.test(expectedCiRunId)) {
