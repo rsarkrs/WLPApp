@@ -54,6 +54,29 @@ if (packet.ciRunAttempt !== null && packet.ciRunAttempt !== undefined && !/^\d+$
 }
 
 
+
+const expectedCiRunId = (process.env.ANDROID_RELEASE_EXPECTED_CI_RUN_ID || '').trim();
+if (expectedCiRunId) {
+  if (!/^\d+$/.test(expectedCiRunId)) {
+    fail('ANDROID_RELEASE_EXPECTED_CI_RUN_ID must be numeric when provided');
+  }
+
+  if (String(packet.ciRunId || '') !== expectedCiRunId) {
+    fail(`ciRunId mismatch: expected ${expectedCiRunId}, got ${packet.ciRunId}`);
+  }
+}
+
+const expectedCiRunAttempt = (process.env.ANDROID_RELEASE_EXPECTED_CI_RUN_ATTEMPT || '').trim();
+if (expectedCiRunAttempt) {
+  if (!/^\d+$/.test(expectedCiRunAttempt)) {
+    fail('ANDROID_RELEASE_EXPECTED_CI_RUN_ATTEMPT must be numeric when provided');
+  }
+
+  if (String(packet.ciRunAttempt || '') !== expectedCiRunAttempt) {
+    fail(`ciRunAttempt mismatch: expected ${expectedCiRunAttempt}, got ${packet.ciRunAttempt}`);
+  }
+}
+
 const expectedSourceRevision = (process.env.ANDROID_RELEASE_EXPECTED_SOURCE_REVISION || '').trim().toLowerCase();
 if (expectedSourceRevision) {
   if (!/^[a-f0-9]{40}$/.test(expectedSourceRevision)) {
