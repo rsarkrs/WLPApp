@@ -149,3 +149,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Add SHA-256 checksums to generated Android release packet docs entries.
 - [x] Validate release packet hashes against source launch/compliance docs.
 - [x] Add automated test coverage for release packet hash mismatch behavior.
+
+
+## Phase 22 — Android Release Packet Source Traceability
+- [x] Capture source git revision in generated Android release packet artifacts.
+- [x] Validate release packet source revision format during packet checks.
+- [x] Add automated tests for invalid release packet source revision handling.

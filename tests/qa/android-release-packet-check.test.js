@@ -38,6 +38,8 @@ test('release packet checker fails when required docs entry is missing', () => {
     JSON.stringify(
       {
         generatedAt: new Date().toISOString(),
+        sourceRevision: 'a'.repeat(40),
+        sourceRevision: 'a'.repeat(40),
         docs: [
           {
             file: 'docs/mobile/android-launch-readiness.md',
@@ -71,6 +73,7 @@ test('release packet checker fails when hash does not match source file', () => 
     JSON.stringify(
       {
         generatedAt: new Date().toISOString(),
+        sourceRevision: 'a'.repeat(40),
         docs: [
           {
             file: 'docs/mobile/android-launch-readiness.md',
@@ -122,4 +125,24 @@ test('release packet checker fails when hash does not match source file', () => 
 
   assert.equal(check.status, 1);
   assert.match(check.stderr, /sha256 mismatch/);
+});
+
+
+test('release packet checker fails when sourceRevision is invalid', () => {
+  const badRevisionPath = path.join('.tmp', 'bad-release-packet-revision.json');
+  fs.mkdirSync('.tmp', { recursive: true });
+
+  const gen = run('node', ['scripts/generate_android_release_packet.js']);
+  assert.equal(gen.status, 0, gen.stderr);
+
+  const packet = JSON.parse(fs.readFileSync('artifacts/android/release-packet.json', 'utf8'));
+  packet.sourceRevision = 'not-a-sha';
+  fs.writeFileSync(badRevisionPath, JSON.stringify(packet, null, 2));
+
+  const check = run('node', ['scripts/check_android_release_packet.js'], {
+    ANDROID_RELEASE_PACKET_PATH: badRevisionPath
+  });
+
+  assert.equal(check.status, 1);
+  assert.match(check.stderr, /sourceRevision must be a 40-char git sha/);
 });

@@ -4,6 +4,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const { spawnSync } = require('node:child_process');
 
 const REQUIRED_DOCS = [
   'docs/mobile/android-launch-readiness.md',
@@ -22,6 +23,31 @@ function sha256File(filePath) {
   return crypto.createHash('sha256').update(content).digest('hex');
 }
 
+function resolveSourceRevision() {
+  const shaFromEnv = process.env.GITHUB_SHA;
+  if (shaFromEnv && /^[a-f0-9]{40}$/i.test(shaFromEnv)) {
+    return shaFromEnv.toLowerCase();
+  }
+
+  const result = spawnSync('git', ['rev-parse', 'HEAD'], {
+    cwd: process.cwd(),
+    encoding: 'utf8'
+  });
+
+  if (result.status !== 0) {
+    console.error('android release packet generation failed: unable to resolve source revision');
+    process.exit(1);
+  }
+
+  const revision = (result.stdout || '').trim().toLowerCase();
+  if (!/^[a-f0-9]{40}$/.test(revision)) {
+    console.error('android release packet generation failed: resolved source revision is invalid');
+    process.exit(1);
+  }
+
+  return revision;
+}
+
 for (const file of REQUIRED_DOCS) {
   if (!fs.existsSync(file)) {
     console.error(`android release packet generation failed: missing file ${file}`);
@@ -32,8 +58,10 @@ for (const file of REQUIRED_DOCS) {
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
 const generatedAt = new Date().toISOString();
+const sourceRevision = resolveSourceRevision();
 const packet = {
   generatedAt,
+  sourceRevision,
   docs: REQUIRED_DOCS.map((file) => {
     const stats = fs.statSync(file);
     return {
