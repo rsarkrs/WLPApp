@@ -161,3 +161,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Bind release packet source revision validation to CI `github.sha`.
 - [x] Add validator support for explicit expected source revision checks.
 - [x] Add automated test coverage for source revision mismatch behavior.
+
+
+## Phase 24 — Android Release Packet CI Run Traceability
+- [x] Capture CI run metadata in generated Android release packet artifacts.
+- [x] Validate CI run metadata format during release packet checks.
+- [x] Add automated tests for malformed CI run metadata behavior.

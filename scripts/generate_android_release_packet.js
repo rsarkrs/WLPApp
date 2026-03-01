@@ -59,9 +59,13 @@ fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
 const generatedAt = new Date().toISOString();
 const sourceRevision = resolveSourceRevision();
+const ciRunId = (process.env.GITHUB_RUN_ID || '').trim() || null;
+const ciRunAttempt = (process.env.GITHUB_RUN_ATTEMPT || '').trim() || null;
 const packet = {
   generatedAt,
   sourceRevision,
+  ciRunId,
+  ciRunAttempt,
   docs: REQUIRED_DOCS.map((file) => {
     const stats = fs.statSync(file);
     return {

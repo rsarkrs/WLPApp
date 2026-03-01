@@ -161,3 +161,23 @@ test('release packet checker fails when expected source revision does not match 
   assert.equal(check.status, 1);
   assert.match(check.stderr, /sourceRevision mismatch/);
 });
+
+
+test('release packet checker fails when ci run metadata is malformed', () => {
+  const badCiPath = path.join('.tmp', 'bad-release-packet-ci.json');
+  fs.mkdirSync('.tmp', { recursive: true });
+
+  const gen = run('node', ['scripts/generate_android_release_packet.js']);
+  assert.equal(gen.status, 0, gen.stderr);
+
+  const packet = JSON.parse(fs.readFileSync('artifacts/android/release-packet.json', 'utf8'));
+  packet.ciRunId = 'run-x';
+  fs.writeFileSync(badCiPath, JSON.stringify(packet, null, 2));
+
+  const check = run('node', ['scripts/check_android_release_packet.js'], {
+    ANDROID_RELEASE_PACKET_PATH: badCiPath
+  });
+
+  assert.equal(check.status, 1);
+  assert.match(check.stderr, /ciRunId must be numeric when present/);
+});

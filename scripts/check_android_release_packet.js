@@ -45,6 +45,15 @@ if (!/^[a-f0-9]{40}$/.test((packet.sourceRevision || '').toLowerCase())) {
 }
 
 
+if (packet.ciRunId !== null && packet.ciRunId !== undefined && !/^\d+$/.test(String(packet.ciRunId))) {
+  fail('ciRunId must be numeric when present');
+}
+
+if (packet.ciRunAttempt !== null && packet.ciRunAttempt !== undefined && !/^\d+$/.test(String(packet.ciRunAttempt))) {
+  fail('ciRunAttempt must be numeric when present');
+}
+
+
 const expectedSourceRevision = (process.env.ANDROID_RELEASE_EXPECTED_SOURCE_REVISION || '').trim().toLowerCase();
 if (expectedSourceRevision) {
   if (!/^[a-f0-9]{40}$/.test(expectedSourceRevision)) {
