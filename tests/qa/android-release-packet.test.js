@@ -28,6 +28,7 @@ test('android release packet script generates packet with required docs', () => 
   assert.match(packet.sourceRevision, /^[a-f0-9]{40}$/);
   if (packet.ciRunId !== null) assert.match(String(packet.ciRunId), /^\d+$/);
   if (packet.ciRunAttempt !== null) assert.match(String(packet.ciRunAttempt), /^\d+$/);
+  if (packet.ciRunNumber !== null) assert.match(String(packet.ciRunNumber), /^\d+$/);
   assert.ok(Array.isArray(packet.docs));
   assert.ok(packet.docs.length >= 6);
   assert.ok(Array.isArray(packet.checklist));

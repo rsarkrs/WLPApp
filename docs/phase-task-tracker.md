@@ -173,3 +173,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Bind release packet CI run metadata validation to workflow `github.run_id`.
 - [x] Bind release packet CI run attempt validation to workflow `github.run_attempt`.
 - [x] Add automated tests for CI run metadata mismatch behavior.
+
+
+## Phase 26 — Android Release Packet Workflow Provenance
+- [x] Capture workflow/run-number metadata in Android release packet artifacts.
+- [x] Validate expected CI workflow and run-number binding during packet checks.
+- [x] Add automated tests for workflow/run-number mismatch behavior.

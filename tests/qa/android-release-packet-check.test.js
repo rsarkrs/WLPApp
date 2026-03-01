@@ -212,3 +212,32 @@ test('release packet checker fails when expected CI run attempt does not match p
   assert.equal(check.status, 1);
   assert.match(check.stderr, /ciRunAttempt mismatch/);
 });
+
+
+test('release packet checker fails when expected CI workflow does not match packet', () => {
+  const gen = run('node', ['scripts/generate_android_release_packet.js'], {
+    GITHUB_WORKFLOW: 'Android Release Baseline (TWA)'
+  });
+  assert.equal(gen.status, 0, gen.stderr);
+
+  const check = run('node', ['scripts/check_android_release_packet.js'], {
+    ANDROID_RELEASE_EXPECTED_CI_WORKFLOW: 'Different Workflow'
+  });
+
+  assert.equal(check.status, 1);
+  assert.match(check.stderr, /ciWorkflow mismatch/);
+});
+
+test('release packet checker fails when expected CI run number does not match packet', () => {
+  const gen = run('node', ['scripts/generate_android_release_packet.js'], {
+    GITHUB_RUN_NUMBER: '55'
+  });
+  assert.equal(gen.status, 0, gen.stderr);
+
+  const check = run('node', ['scripts/check_android_release_packet.js'], {
+    ANDROID_RELEASE_EXPECTED_CI_RUN_NUMBER: '56'
+  });
+
+  assert.equal(check.status, 1);
+  assert.match(check.stderr, /ciRunNumber mismatch/);
+});
