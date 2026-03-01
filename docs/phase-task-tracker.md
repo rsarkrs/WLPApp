@@ -119,3 +119,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Add automated TWA shell bootstrap script for local packaging setup.
 - [x] Add TWA bootstrap usage guide with environment variable overrides.
 - [x] Add CI smoke validation for generated Android shell project structure.
+
+
+## Phase 17 — Android Launch Readiness
+- [x] Define explicit go/no-go criteria for Play Store launch.
+- [x] Add Android launch-readiness gate workflow for tagged release candidates.
+- [x] Add script to validate required launch/compliance documentation presence.
