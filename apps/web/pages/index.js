@@ -5,6 +5,13 @@ const mealSlots = ['breakfast', 'lunch', 'dinner'];
 const cuisineOptions = ['american', 'mediterranean', 'italian', 'chinese', 'korean'];
 const defaultActivity = 'moderate';
 const localStateKey = 'wlpapp-local-state-v1';
+const launchReadinessChecklist = [
+  'Profile + goals setup can be completed without errors.',
+  'Weekly planner generation succeeds with at least one household member selected.',
+  'Shopping list export produces valid JSON output.',
+  'Internal Android/TWA release packet checks pass in CI before internal rollout.'
+];
+
 
 function makeProfile(memberId) {
   return {
@@ -564,14 +571,33 @@ export default function HomePage() {
   return (
     <main style={{ fontFamily: 'system-ui, sans-serif', margin: '1rem auto', maxWidth: '1400px', color: '#1f2438' }}>
       <h1>WLPApp Web Scaffold</h1>
-      <p>Phase 10 MVP flows are running.</p>
+      <p><strong>Internal Launch UI Beta:</strong> Phase 10 MVP flows are active and later phases harden release-readiness automation.</p>
       <p>API target: <code>/api</code> (used for calculations/meal generation only; profile data is local-storage only)</p>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+      <section style={{ ...surfaceStyle, marginBottom: '1rem', background: '#eef3ff' }}>
+        <h2 style={{ marginTop: 0 }}>Internal launch status</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(180px, 1fr))', gap: '0.6rem' }}>
+          <div style={{ background: 'white', border: '1px solid #d5ddff', borderRadius: '8px', padding: '0.6rem' }}>
+            <strong>UI Surface</strong>
+            <div>Phase 10 MVP complete</div>
+          </div>
+          <div style={{ background: 'white', border: '1px solid #d5ddff', borderRadius: '8px', padding: '0.6rem' }}>
+            <strong>QA / Release Gates</strong>
+            <div>Phases 11+ automated</div>
+          </div>
+          <div style={{ background: 'white', border: '1px solid #d5ddff', borderRadius: '8px', padding: '0.6rem' }}>
+            <strong>Android Track</strong>
+            <div>TWA + release packet pipeline</div>
+          </div>
+        </div>
+      </section>
+
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
         {tabButton('profile', 'Profile and Goals')}
         {tabButton('planner', 'Weekly Planner')}
         {tabButton('recipes', 'Recipes Used')}
         {tabButton('shopping', 'Shopping List')}
+        {tabButton('launch', 'Internal Launch Checklist')}
       </div>
 
       {activeTab === 'profile' && (
@@ -867,6 +893,22 @@ export default function HomePage() {
               ))}
             </tbody>
           </table>
+        </section>
+      )}
+
+
+      {activeTab === 'launch' && (
+        <section style={surfaceStyle}>
+          <h2>Internal launch checklist</h2>
+          <p>Use this checklist for internal rollout readiness before Play Store internal-track submission.</p>
+          <ul>
+            {launchReadinessChecklist.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+          <p style={{ marginBottom: 0 }}>
+            Detailed execution ledger: <code>docs/phase-task-tracker.md</code>.
+          </p>
         </section>
       )}
     </main>

@@ -179,3 +179,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Capture workflow/run-number metadata in Android release packet artifacts.
 - [x] Validate expected CI workflow and run-number binding during packet checks.
 - [x] Add automated tests for workflow/run-number mismatch behavior.
+
+
+## Phase 27 — Internal Launch UX Hardening
+- [x] Add explicit internal-launch status framing in the web UI header.
+- [x] Add dedicated internal launch checklist tab for operators/testers.
+- [x] Align tracker/docs language to clarify Phase 10 UI + later release-hardening phases.
