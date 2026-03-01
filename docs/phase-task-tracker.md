@@ -155,3 +155,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Capture source git revision in generated Android release packet artifacts.
 - [x] Validate release packet source revision format during packet checks.
 - [x] Add automated tests for invalid release packet source revision handling.
+
+
+## Phase 23 — Android Release Packet CI SHA Binding
+- [x] Bind release packet source revision validation to CI `github.sha`.
+- [x] Add validator support for explicit expected source revision checks.
+- [x] Add automated test coverage for source revision mismatch behavior.
