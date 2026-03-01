@@ -40,6 +40,10 @@ if (!packet.generatedAt || Number.isNaN(Date.parse(packet.generatedAt))) {
   fail('generatedAt must be a valid ISO timestamp');
 }
 
+if (!/^[a-f0-9]{40}$/.test((packet.sourceRevision || '').toLowerCase())) {
+  fail('sourceRevision must be a 40-char git sha');
+}
+
 if (!Array.isArray(packet.docs)) {
   fail('docs must be an array');
 }

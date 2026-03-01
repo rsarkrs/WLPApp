@@ -129,7 +129,7 @@ npm run qa:mobile
 - Android launch-go/no-go criteria are documented at `docs/mobile/android-launch-readiness.md`, with a tagged release gate at `.github/workflows/android-launch-readiness-gate.yml` and local check command `npm run android:launch:check`.
 - Android signing preflight is automated via `.github/workflows/android-release-baseline.yml` and locally via `npm run android:release:preflight` (validates docs + signing secrets).
 - Android release evidence packet generation is available via `npm run android:release:packet` and uploaded by the Android release baseline workflow.
-- Android release packet schema validation is available via `npm run android:release:packet:check` and is enforced before artifact upload in CI, including per-document SHA-256 integrity verification.
+- Android release packet schema validation is available via `npm run android:release:packet:check` and is enforced before artifact upload in CI, including per-document SHA-256 integrity verification and source git revision validation.
 - Compliance baseline now includes repository-tracked privacy/Data Safety docs and a CI compliance-doc gate (`docs/compliance/privacy-policy.md`, `docs/compliance/play-store-data-safety-checklist.md`, `.github/workflows/compliance-doc-gate.yml`).
 - QA hardening now includes shared API payload contract validators (`src/contracts/api.js`) with contract tests against live API responses.
 - Web scaffold now keeps profile/planner state in browser localStorage (local-only persistence; no hosted profile storage required).
