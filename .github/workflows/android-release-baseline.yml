@@ -36,6 +36,9 @@ jobs:
       - name: Generate Android release packet
         run: npm run android:release:packet
 
+      - name: Validate Android release packet artifact
+        run: npm run android:release:packet:check
+
       - name: Prepare decoded keystore artifact
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}

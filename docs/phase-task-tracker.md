@@ -137,3 +137,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Add release-packet generator that captures required Android launch/compliance docs.
 - [x] Wire release baseline workflow to publish Android release packet artifact.
 - [x] Add automated test coverage for release packet generation behavior.
+
+
+## Phase 20 — Android Release Packet Validation
+- [x] Add schema validator for generated Android release packet artifact.
+- [x] Wire Android release baseline workflow to validate packet before upload.
+- [x] Add automated test coverage for packet validator pass/fail behavior.
