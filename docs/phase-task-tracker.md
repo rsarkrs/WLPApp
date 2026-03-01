@@ -143,3 +143,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Add schema validator for generated Android release packet artifact.
 - [x] Wire Android release baseline workflow to validate packet before upload.
 - [x] Add automated test coverage for packet validator pass/fail behavior.
+
+
+## Phase 21 — Android Release Packet Integrity Hashing
+- [x] Add SHA-256 checksums to generated Android release packet docs entries.
+- [x] Validate release packet hashes against source launch/compliance docs.
+- [x] Add automated test coverage for release packet hash mismatch behavior.

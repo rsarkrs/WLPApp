@@ -29,4 +29,5 @@ test('android release packet script generates packet with required docs', () => 
   assert.ok(packet.docs.length >= 6);
   assert.ok(Array.isArray(packet.checklist));
   assert.match(packet.docs[0].file, /^docs\//);
+  assert.match(packet.docs[0].sha256, /^[a-f0-9]{64}$/);
 });
