@@ -26,6 +26,8 @@ test('android release packet script generates packet with required docs', () => 
   const packet = JSON.parse(fs.readFileSync(PACKET_PATH, 'utf8'));
   assert.ok(packet.generatedAt);
   assert.match(packet.sourceRevision, /^[a-f0-9]{40}$/);
+  if (packet.ciRunId !== null) assert.match(String(packet.ciRunId), /^\d+$/);
+  if (packet.ciRunAttempt !== null) assert.match(String(packet.ciRunAttempt), /^\d+$/);
   assert.ok(Array.isArray(packet.docs));
   assert.ok(packet.docs.length >= 6);
   assert.ok(Array.isArray(packet.checklist));
