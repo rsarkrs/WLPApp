@@ -181,3 +181,34 @@ test('release packet checker fails when ci run metadata is malformed', () => {
   assert.equal(check.status, 1);
   assert.match(check.stderr, /ciRunId must be numeric when present/);
 });
+
+
+test('release packet checker fails when expected CI run id does not match packet', () => {
+  const gen = run('node', ['scripts/generate_android_release_packet.js'], {
+    GITHUB_RUN_ID: '100',
+    GITHUB_RUN_ATTEMPT: '2'
+  });
+  assert.equal(gen.status, 0, gen.stderr);
+
+  const check = run('node', ['scripts/check_android_release_packet.js'], {
+    ANDROID_RELEASE_EXPECTED_CI_RUN_ID: '101'
+  });
+
+  assert.equal(check.status, 1);
+  assert.match(check.stderr, /ciRunId mismatch/);
+});
+
+test('release packet checker fails when expected CI run attempt does not match packet', () => {
+  const gen = run('node', ['scripts/generate_android_release_packet.js'], {
+    GITHUB_RUN_ID: '100',
+    GITHUB_RUN_ATTEMPT: '2'
+  });
+  assert.equal(gen.status, 0, gen.stderr);
+
+  const check = run('node', ['scripts/check_android_release_packet.js'], {
+    ANDROID_RELEASE_EXPECTED_CI_RUN_ATTEMPT: '3'
+  });
+
+  assert.equal(check.status, 1);
+  assert.match(check.stderr, /ciRunAttempt mismatch/);
+});

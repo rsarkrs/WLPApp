@@ -167,3 +167,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Capture CI run metadata in generated Android release packet artifacts.
 - [x] Validate CI run metadata format during release packet checks.
 - [x] Add automated tests for malformed CI run metadata behavior.
+
+
+## Phase 25 — Android Release Packet CI Run Binding
+- [x] Bind release packet CI run metadata validation to workflow `github.run_id`.
+- [x] Bind release packet CI run attempt validation to workflow `github.run_attempt`.
+- [x] Add automated tests for CI run metadata mismatch behavior.
