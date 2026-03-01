@@ -146,3 +146,18 @@ test('release packet checker fails when sourceRevision is invalid', () => {
   assert.equal(check.status, 1);
   assert.match(check.stderr, /sourceRevision must be a 40-char git sha/);
 });
+
+
+test('release packet checker fails when expected source revision does not match packet', () => {
+  fs.rmSync('artifacts/android', { recursive: true, force: true });
+
+  const gen = run('node', ['scripts/generate_android_release_packet.js']);
+  assert.equal(gen.status, 0, gen.stderr);
+
+  const check = run('node', ['scripts/check_android_release_packet.js'], {
+    ANDROID_RELEASE_EXPECTED_SOURCE_REVISION: 'f'.repeat(40)
+  });
+
+  assert.equal(check.status, 1);
+  assert.match(check.stderr, /sourceRevision mismatch/);
+});

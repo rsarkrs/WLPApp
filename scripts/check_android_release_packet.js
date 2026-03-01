@@ -44,6 +44,18 @@ if (!/^[a-f0-9]{40}$/.test((packet.sourceRevision || '').toLowerCase())) {
   fail('sourceRevision must be a 40-char git sha');
 }
 
+
+const expectedSourceRevision = (process.env.ANDROID_RELEASE_EXPECTED_SOURCE_REVISION || '').trim().toLowerCase();
+if (expectedSourceRevision) {
+  if (!/^[a-f0-9]{40}$/.test(expectedSourceRevision)) {
+    fail('ANDROID_RELEASE_EXPECTED_SOURCE_REVISION must be a 40-char git sha when provided');
+  }
+
+  if (packet.sourceRevision.toLowerCase() !== expectedSourceRevision) {
+    fail(`sourceRevision mismatch: expected ${expectedSourceRevision}, got ${packet.sourceRevision}`);
+  }
+}
+
 if (!Array.isArray(packet.docs)) {
   fail('docs must be an array');
 }
