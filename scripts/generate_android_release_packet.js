@@ -3,6 +3,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 
 const REQUIRED_DOCS = [
   'docs/mobile/android-launch-readiness.md',
@@ -15,6 +16,11 @@ const REQUIRED_DOCS = [
 
 const OUTPUT_DIR = path.join('artifacts', 'android');
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'release-packet.json');
+
+function sha256File(filePath) {
+  const content = fs.readFileSync(filePath);
+  return crypto.createHash('sha256').update(content).digest('hex');
+}
 
 for (const file of REQUIRED_DOCS) {
   if (!fs.existsSync(file)) {
@@ -33,7 +39,8 @@ const packet = {
     return {
       file,
       bytes: stats.size,
-      lastModified: stats.mtime.toISOString()
+      lastModified: stats.mtime.toISOString(),
+      sha256: sha256File(file)
     };
   }),
   checklist: [
