@@ -131,3 +131,9 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Replace Android release placeholder workflow with executable preflight steps.
 - [x] Add automated preflight script that validates signing secrets and required launch docs.
 - [x] Add automated test coverage for Android preflight script behavior.
+
+
+## Phase 19 — Android Release Evidence Artifacts
+- [x] Add release-packet generator that captures required Android launch/compliance docs.
+- [x] Wire release baseline workflow to publish Android release packet artifact.
+- [x] Add automated test coverage for release packet generation behavior.
