@@ -17,9 +17,14 @@ WLPApp uses a **Trusted Web Activity (TWA)** wrapper as the packaging path for A
 ## Current state
 - Android shell bootstrap is automated via `scripts/bootstrap_twa_project.sh` and smoke-checked in CI.
 - Launch readiness criteria are documented in `docs/mobile/android-launch-readiness.md`.
-- Signing preflight now validates required secrets/docs and emits a decoded keystore artifact in CI for auditability.
+- Signing preflight now validates required secrets/docs and emits both a decoded keystore artifact and a structured Android release packet in CI for auditability.
 
 ## Follow-up required for production release
 1. Generate signed AAB from the TWA project inside CI using Bubblewrap/Gradle.
 2. Add Play Console internal track upload automation with manual approval gate.
 3. Add Android emulator smoke tests (launch + API reachability + planner flow).
+
+
+## Local preflight artifact commands
+- `npm run android:release:preflight` validates required Android signing env vars + mobile docs.
+- `npm run android:release:packet` generates `artifacts/android/release-packet.json` for release evidence.
