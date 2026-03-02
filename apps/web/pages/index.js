@@ -5,6 +5,7 @@ const mealSlots = ['breakfast', 'lunch', 'dinner'];
 const cuisineOptions = ['american', 'mediterranean', 'italian', 'chinese', 'korean'];
 const defaultActivity = 'moderate';
 const localStateKey = 'wlpapp-local-state-v1';
+const maxMembers = 3;
 const launchReadinessChecklist = [
   'Profile + goals setup can be completed without errors.',
   'Weekly planner generation succeeds with at least one household member selected.',
@@ -13,10 +14,11 @@ const launchReadinessChecklist = [
 ];
 
 
-function makeProfile(memberId) {
+function makeProfile(memberId, friendlyName = 'Member') {
   return {
     householdId: 'hh-demo',
     memberId,
+    friendlyName,
     sex: 'male',
     ageYears: '35',
     activityLevel: defaultActivity,
@@ -27,6 +29,10 @@ function makeProfile(memberId) {
     requestedWeeklyLoss: '1.1',
     targetDailyCalories: '2500',
   };
+}
+
+function labelCase(value = '') {
+  return value.slice(0, 1).toUpperCase() + value.slice(1);
 }
 
 function emptyWeek() {
@@ -155,9 +161,9 @@ function convertProfileUnit(profile, nextUnit) {
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState('profile');
-  const [profiles, setProfiles] = useState([makeProfile('member-1'), makeProfile('member-2')]);
-  const [enableSecondProfile, setEnableSecondProfile] = useState(true);
-  const [statusMessage, setStatusMessage] = useState('Save profiles and optionally enable a second person.');
+  const [profiles, setProfiles] = useState([makeProfile('member-1', 'Member 1'), makeProfile('member-2', 'Member 2')]);
+  const [activeProfileTab, setActiveProfileTab] = useState(0);
+  const [statusMessage, setStatusMessage] = useState('Save each member profile before generating the planner.');
   const [savedProfiles, setSavedProfiles] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [seed, setSeed] = useState(0);
@@ -172,10 +178,16 @@ export default function HomePage() {
     cuisines: [],
     excludedIngredients: [],
   });
+  const [selectedIngredientsByType, setSelectedIngredientsByType] = useState({});
+  const [activeIngredientType, setActiveIngredientType] = useState('');
+  const [selectedExcludedIngredients, setSelectedExcludedIngredients] = useState([]);
   const [selectedPlannerMemberId, setSelectedPlannerMemberId] = useState('');
+  const [swapDialog, setSwapDialog] = useState({ open: false, dayIndex: -1, mealIndex: -1, meal: null, selectedRecipeId: '' });
+  const [undoSwapState, setUndoSwapState] = useState(null);
+  const [isMobileNav, setIsMobileNav] = useState(true);
 
   const apiBase = useMemo(() => '/api', []);
-  const editableProfiles = enableSecondProfile ? profiles : profiles.slice(0, 1);
+  const editableProfiles = profiles;
 
   const activeProfiles = useMemo(() => {
     if (selectedMembers.length > 0) {
@@ -190,6 +202,7 @@ export default function HomePage() {
   const profileScales = useMemo(
     () => activeProfiles.map((profile) => ({
       memberId: profile.memberId,
+      friendlyName: profile.friendlyName,
       targetDailyCalories: Number(profile.targetDailyCalories || 2000),
       baseScale: Math.max(Number(profile.targetDailyCalories || 2000), 1) / 2000,
     })),
@@ -224,14 +237,22 @@ export default function HomePage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(max-width: 768px)');
+    const apply = () => setIsMobileNav(media.matches);
+    apply();
+    media.addEventListener('change', apply);
+    return () => media.removeEventListener('change', apply);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
     try {
       const parsed = JSON.parse(window.localStorage.getItem(localStateKey) || 'null');
       if (!parsed) return;
 
-      if (Array.isArray(parsed.profiles) && parsed.profiles.length > 0) setProfiles(parsed.profiles);
-      if (typeof parsed.enableSecondProfile === 'boolean') setEnableSecondProfile(parsed.enableSecondProfile);
-      if (Array.isArray(parsed.savedProfiles)) setSavedProfiles(parsed.savedProfiles);
-      if (Array.isArray(parsed.selectedMembers)) setSelectedMembers(parsed.selectedMembers);
+      if (Array.isArray(parsed.profiles) && parsed.profiles.length > 0) setProfiles(parsed.profiles.slice(0, maxMembers).map((item, index) => ({ ...item, friendlyName: item.friendlyName || `Member ${index + 1}` })));
+      if (Array.isArray(parsed.savedProfiles)) setSavedProfiles(parsed.savedProfiles.slice(0, maxMembers));
+      if (Array.isArray(parsed.selectedMembers)) setSelectedMembers(parsed.selectedMembers.slice(0, maxMembers));
       if (Array.isArray(parsed.weekPlan)) setWeekPlan(parsed.weekPlan);
       if (Array.isArray(parsed.mealBank)) setMealBank(parsed.mealBank);
       if (parsed.preferences) setPreferences(parsed.preferences);
@@ -250,7 +271,6 @@ export default function HomePage() {
       localStateKey,
       JSON.stringify({
         profiles,
-        enableSecondProfile,
         savedProfiles,
         selectedMembers,
         weekPlan,
@@ -263,7 +283,6 @@ export default function HomePage() {
     );
   }, [
     profiles,
-    enableSecondProfile,
     savedProfiles,
     selectedMembers,
     weekPlan,
@@ -316,6 +335,7 @@ export default function HomePage() {
     const payload = {
       householdId: profile.householdId,
       memberId: profile.memberId,
+      friendlyName: profile.friendlyName,
       sex: profile.sex,
       ageYears: Number(profile.ageYears),
       activityLevel: profile.activityLevel,
@@ -333,14 +353,31 @@ export default function HomePage() {
     });
     setSelectedMembers((current) => {
       const without = current.filter((item) => item !== payload.memberId);
-      return [...without, payload.memberId].slice(0, enableSecondProfile ? 2 : 1);
+      return [...without, payload.memberId].slice(0, maxMembers);
     });
     setStatusMessage(`Saved ${payload.memberId} locally on this device.`);
   }
 
   async function loadProfiles() {
-    setSelectedMembers(savedProfiles.slice(0, enableSecondProfile ? 2 : 1).map((item) => item.memberId));
+    setSelectedMembers(savedProfiles.slice(0, maxMembers).map((item) => item.memberId));
     setStatusMessage(`Loaded ${savedProfiles.length} locally saved profile(s).`);
+  }
+
+  function addMember() {
+    if (profiles.length >= maxMembers) return;
+    const next = profiles.length + 1;
+    setProfiles((current) => [...current, makeProfile(`member-${next}`, `Member ${next}`)]);
+    setActiveProfileTab(profiles.length);
+  }
+
+  function removeMember(index) {
+    if (profiles.length <= 1) return;
+    const memberId = profiles[index]?.memberId;
+    setProfiles((current) => current.filter((_, i) => i !== index));
+    setSavedProfiles((current) => current.filter((item) => item.memberId !== memberId));
+    setSelectedMembers((current) => current.filter((item) => item !== memberId));
+    setActiveProfileTab((current) => Math.max(0, Math.min(current, profiles.length - 2)));
+    setStatusMessage('Removed member profile.');
   }
 
   function cuisinesQuery() {
@@ -448,6 +485,53 @@ export default function HomePage() {
     }
   }
 
+  function openSwapDialog(dayIndex, mealIndex, meal) {
+    if (!meal) return;
+    setSwapDialog({ open: true, dayIndex, mealIndex, meal, selectedRecipeId: '' });
+  }
+
+  function applyMealSwap(mode) {
+    const selected = mealBank.find((item) => item.id === swapDialog.selectedRecipeId);
+    if (!selected || !swapDialog.meal) return;
+
+    const nextMeal = {
+      day: swapDialog.dayIndex + 1,
+      slot: swapDialog.meal.slot,
+      recipeId: selected.id,
+      recipeName: selected.name,
+      macros: selected.macros,
+      selectionReason: mode === 'all' ? 'swap_all_same_recipe' : 'swap_single_day',
+    };
+
+    setWeekPlan((current) => {
+      const before = current.map((day) => ({ ...day, meals: [...day.meals] }));
+      const updated = before.map((day) => ({ ...day, meals: [...day.meals] }));
+      if (mode === 'all') {
+        updated.forEach((day, dIdx) => {
+          day.meals = day.meals.map((meal, mIdx) => {
+            if (!meal) return meal;
+            if (meal.recipeId !== swapDialog.meal.recipeId || meal.slot !== swapDialog.meal.slot) return meal;
+            return { ...nextMeal, day: dIdx + 1, slot: mealSlots[mIdx] };
+          });
+        });
+      } else {
+        updated[swapDialog.dayIndex].meals[swapDialog.mealIndex] = nextMeal;
+      }
+      setUndoSwapState(before);
+      return updated;
+    });
+
+    setPlannerMessage(`Replaced ${swapDialog.meal.recipeName} with ${selected.name}.`);
+    setSwapDialog({ open: false, dayIndex: -1, mealIndex: -1, meal: null, selectedRecipeId: '' });
+  }
+
+  function undoLastSwap() {
+    if (!undoSwapState) return;
+    setWeekPlan(undoSwapState);
+    setUndoSwapState(null);
+    setPlannerMessage('Undid last meal swap.');
+  }
+
   function dayTotalsForScale(meals, scale) {
     return meals.filter(Boolean).reduce((acc, meal) => {
       const scaled = scaleMacros(meal.macros, scale);
@@ -528,10 +612,55 @@ export default function HomePage() {
     return mealBank.find((item) => item.id === selectedRecipeId) || null;
   }, [mealBank, selectedRecipeId]);
 
-  const ingredientOptions = useMemo(
-    () => [...new Set(mealBank.flatMap((recipe) => recipe.ingredients.map((ingredient) => ingredient.name)))].sort((a, b) => a.localeCompare(b)),
-    [mealBank]
-  );
+  const ingredientTypeMap = useMemo(() => {
+    const grouped = {};
+    for (const recipe of mealBank) {
+      for (const ingredient of recipe.ingredients || []) {
+        const type = ingredient.category || 'other';
+        if (!grouped[type]) grouped[type] = new Set();
+        grouped[type].add(ingredient.name);
+      }
+    }
+
+    const normalized = {};
+    for (const [type, names] of Object.entries(grouped)) {
+      normalized[type] = [...names].sort((a, b) => a.localeCompare(b));
+    }
+    return normalized;
+  }, [mealBank]);
+
+  const selectableSwapRecipes = useMemo(() => {
+    if (!swapDialog.meal) return [];
+    return mealBank.filter((item) => item.mealType === swapDialog.meal.slot);
+  }, [mealBank, swapDialog]);
+
+  useEffect(() => {
+    const types = Object.keys(ingredientTypeMap);
+    if (types.length === 0) {
+      setActiveIngredientType('');
+      return;
+    }
+    if (!types.includes(activeIngredientType)) {
+      setActiveIngredientType(types[0]);
+    }
+  }, [ingredientTypeMap, activeIngredientType]);
+
+  function addExcludedIngredients() {
+    const selected = Object.values(selectedIngredientsByType).flat();
+    if (selected.length === 0) return;
+    const merged = [...new Set([...preferences.excludedIngredients, ...selected])].sort((a, b) => a.localeCompare(b));
+    setPreferences({ ...preferences, excludedIngredients: merged });
+    setSelectedIngredientsByType({});
+  }
+
+  function removeExcludedIngredients() {
+    if (selectedExcludedIngredients.length === 0) return;
+    setPreferences({
+      ...preferences,
+      excludedIngredients: preferences.excludedIngredients.filter((item) => !selectedExcludedIngredients.includes(item)),
+    });
+    setSelectedExcludedIngredients([]);
+  }
 
   function normalizeQtyForUnit(qty, unit) {
     if (unit === 'item') {
@@ -569,7 +698,7 @@ export default function HomePage() {
   };
 
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', margin: '1rem auto', maxWidth: '1400px', color: '#1f2438' }}>
+    <main style={{ fontFamily: 'system-ui, sans-serif', margin: '1rem auto', maxWidth: '1400px', color: '#1f2438', paddingBottom: isMobileNav ? '5rem' : '1rem' }}>
       <h1>WLPApp Web Scaffold</h1>
       <p><strong>Internal Launch UI Beta:</strong> Phase 10 MVP flows are active and later phases harden release-readiness automation.</p>
       <p>API target: <code>/api</code> (used for calculations/meal generation only; profile data is local-storage only)</p>
@@ -592,7 +721,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+      <div style={isMobileNav
+        ? { position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 15, display: 'flex', justifyContent: 'space-around', gap: '0.25rem', padding: '0.5rem', marginBottom: 0, flexWrap: 'nowrap', background: '#ffffff', borderTop: '1px solid #dce2f7' }
+        : { display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
         {tabButton('profile', 'Profile and Goals')}
         {tabButton('planner', 'Weekly Planner')}
         {tabButton('recipes', 'Recipes Used')}
@@ -603,48 +734,56 @@ export default function HomePage() {
       {activeTab === 'profile' && (
         <section style={surfaceStyle}>
           <h2>Profile and goal setup</h2>
-          <label style={{ display: 'inline-flex', gap: '0.4rem', alignItems: 'center', marginBottom: '0.7rem' }}>
-            <input
-              type="checkbox"
-              checked={enableSecondProfile}
-              onChange={(event) => {
-                const enabled = event.target.checked;
-                setEnableSecondProfile(enabled);
-                if (!enabled) setSelectedMembers((current) => current.slice(0, 1));
-              }}
-            />
-            Enable second person
-          </label>
-
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${enableSecondProfile ? 2 : 1}, minmax(420px, 1fr))`, gap: '1rem' }}>
-            {editableProfiles.map((profile, index) => (
-              <div key={`member-card-${index}`} style={{ border: '1px solid #ccd4f0', borderRadius: '8px', padding: '0.75rem', background: 'white' }}>
-                <h3 style={{ marginTop: 0 }}>Member {index + 1} profile</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(120px, 1fr))', gap: '0.6rem' }}>
-                  <label>Household ID<input style={{ width: '100%' }} value={profile.householdId} onChange={(e) => updateProfile(index, { householdId: e.target.value })} /></label>
-                  <label>Member ID<input style={{ width: '100%' }} value={profile.memberId} onChange={(e) => updateProfile(index, { memberId: e.target.value })} /></label>
-                  <label>Sex<select style={{ width: '100%' }} value={profile.sex} onChange={(e) => updateProfile(index, { sex: e.target.value })}><option value="female">female</option><option value="male">male</option></select></label>
-                  <label>Age<input style={{ width: '100%' }} type="number" min="18" value={profile.ageYears} onChange={(e) => updateProfile(index, { ageYears: e.target.value })} /></label>
-                  <label>Activity<select style={{ width: '100%' }} value={profile.activityLevel} onChange={(e) => updateProfile(index, { activityLevel: e.target.value })}><option value="sedentary">sedentary</option><option value="light">light</option><option value="moderate">moderate</option><option value="active">active</option><option value="very_active">very_active</option></select></label>
-                  <label>Units<select style={{ width: '100%' }} value={profile.unitSystem} onChange={(e) => updateProfileUnit(index, e.target.value)}><option value="imperial">imperial</option><option value="metric">metric</option></select></label>
-                  <label>Weight ({profile.unitSystem === 'imperial' ? 'lbs' : 'kg'})<input style={{ width: '100%' }} type="number" value={profile.weight} onChange={(e) => updateProfile(index, { weight: e.target.value })} /></label>
-                  <label>Height ({profile.unitSystem === 'imperial' ? 'ft' : 'cm'})<input style={{ width: '100%' }} type="number" value={profile.heightPrimary} onChange={(e) => updateProfile(index, { heightPrimary: e.target.value })} /></label>
-                  <label>Height ({profile.unitSystem === 'imperial' ? 'in' : 'secondary'})<input style={{ width: '100%' }} type="number" value={profile.heightSecondary} disabled={profile.unitSystem !== 'imperial'} onChange={(e) => updateProfile(index, { heightSecondary: e.target.value })} /></label>
-                  <label>Requested weekly loss ({profile.unitSystem === 'imperial' ? 'lbs' : 'kg'})<input style={{ width: '100%' }} type="number" step="0.1" value={profile.requestedWeeklyLoss} onChange={(e) => updateProfile(index, { requestedWeeklyLoss: e.target.value })} /></label>
-                  <label>Target calories<input style={{ width: '100%' }} type="number" value={profile.targetDailyCalories} readOnly /></label>
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem' }}>
-                  <button type="button" onClick={() => calculateTargetCalories(index)}>Calculate target calories</button>
-                  <button type="button" onClick={() => saveProfile(index)}>Save member</button>
-                </div>
-              </div>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.8rem' }}>
+            {profiles.map((profile, index) => (
+              <button
+                key={`member-tab-${profile.memberId}-${index}`}
+                type="button"
+                onClick={() => setActiveProfileTab(index)}
+                style={{
+                  borderRadius: '999px',
+                  border: activeProfileTab === index ? '1px solid #4c63d2' : '1px solid #d2d7ef',
+                  background: activeProfileTab === index ? '#4c63d2' : '#eef1ff',
+                  color: activeProfileTab === index ? 'white' : '#233',
+                  padding: '0.45rem 0.9rem',
+                  cursor: 'pointer',
+                }}
+              >
+                {profile.friendlyName || `Member ${index + 1}`}
+              </button>
             ))}
+            <button type="button" onClick={addMember} disabled={profiles.length >= maxMembers}>+ Add member</button>
           </div>
+
+          {profiles[activeProfileTab] && (
+            <div style={{ border: '1px solid #ccd4f0', borderRadius: '8px', padding: '0.75rem', background: 'white' }}>
+              <h3 style={{ marginTop: 0 }}>{profiles[activeProfileTab].friendlyName || `Member ${activeProfileTab + 1}`}</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(120px, 1fr))', gap: '0.6rem' }}>
+                <label>Friendly name<input style={{ width: '100%' }} value={profiles[activeProfileTab].friendlyName || ''} onChange={(e) => updateProfile(activeProfileTab, { friendlyName: e.target.value })} /></label>
+                <label>Household ID<input style={{ width: '100%' }} value={profiles[activeProfileTab].householdId} onChange={(e) => updateProfile(activeProfileTab, { householdId: e.target.value })} /></label>
+                <label>Member ID<input style={{ width: '100%' }} value={profiles[activeProfileTab].memberId} onChange={(e) => updateProfile(activeProfileTab, { memberId: e.target.value })} /></label>
+                <label>Sex<select style={{ width: '100%' }} value={profiles[activeProfileTab].sex} onChange={(e) => updateProfile(activeProfileTab, { sex: e.target.value })}><option value="female">female</option><option value="male">male</option></select></label>
+                <label>Age<input style={{ width: '100%' }} type="number" min="18" value={profiles[activeProfileTab].ageYears} onChange={(e) => updateProfile(activeProfileTab, { ageYears: e.target.value })} /></label>
+                <label>Activity<select style={{ width: '100%' }} value={profiles[activeProfileTab].activityLevel} onChange={(e) => updateProfile(activeProfileTab, { activityLevel: e.target.value })}><option value="sedentary">sedentary</option><option value="light">light</option><option value="moderate">moderate</option><option value="active">active</option><option value="very_active">very_active</option></select></label>
+                <label>Units<select style={{ width: '100%' }} value={profiles[activeProfileTab].unitSystem} onChange={(e) => updateProfileUnit(activeProfileTab, e.target.value)}><option value="imperial">imperial</option><option value="metric">metric</option></select></label>
+                <label>Weight ({profiles[activeProfileTab].unitSystem === 'imperial' ? 'lbs' : 'kg'})<input style={{ width: '100%' }} type="number" value={profiles[activeProfileTab].weight} onChange={(e) => updateProfile(activeProfileTab, { weight: e.target.value })} /></label>
+                <label>Height ({profiles[activeProfileTab].unitSystem === 'imperial' ? 'ft' : 'cm'})<input style={{ width: '100%' }} type="number" value={profiles[activeProfileTab].heightPrimary} onChange={(e) => updateProfile(activeProfileTab, { heightPrimary: e.target.value })} /></label>
+                <label>Height ({profiles[activeProfileTab].unitSystem === 'imperial' ? 'in' : 'secondary'})<input style={{ width: '100%' }} type="number" value={profiles[activeProfileTab].heightSecondary} disabled={profiles[activeProfileTab].unitSystem !== 'imperial'} onChange={(e) => updateProfile(activeProfileTab, { heightSecondary: e.target.value })} /></label>
+                <label>Requested weekly loss ({profiles[activeProfileTab].unitSystem === 'imperial' ? 'lbs' : 'kg'})<input style={{ width: '100%' }} type="number" step="0.1" value={profiles[activeProfileTab].requestedWeeklyLoss} onChange={(e) => updateProfile(activeProfileTab, { requestedWeeklyLoss: e.target.value })} /></label>
+                <label>Target calories<input style={{ width: '100%' }} type="number" value={profiles[activeProfileTab].targetDailyCalories} readOnly /></label>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem' }}>
+                <button type="button" onClick={() => calculateTargetCalories(activeProfileTab)}>Calculate target calories</button>
+                <button type="button" onClick={() => saveProfile(activeProfileTab)}>Save member</button>
+                <button type="button" onClick={() => removeMember(activeProfileTab)} disabled={profiles.length <= 1}>Remove member</button>
+              </div>
+            </div>
+          )}
 
           <div style={{ marginTop: '0.75rem' }}>
             <button type="button" onClick={() => loadProfiles()}>Load saved profiles (local)</button>
             <p aria-live="polite">{statusMessage}</p>
-            <p><strong>Members used for planner scaling (select up to {enableSecondProfile ? 2 : 1}):</strong></p>
+            <p><strong>Members used for planner scaling (select up to {maxMembers}):</strong></p>
             <ul>
               {savedProfiles.map((item) => (
                 <li key={item.memberId}>
@@ -655,10 +794,10 @@ export default function HomePage() {
                       onChange={() => setSelectedMembers((current) => {
                         if (current.includes(item.memberId)) return current.filter((id) => id !== item.memberId);
                         const next = [...current, item.memberId];
-                        return next.slice(0, enableSecondProfile ? 2 : 1);
+                        return next.slice(0, maxMembers);
                       })}
                     />
-                    {item.memberId} ({item.targetDailyCalories} kcal)
+                    {item.friendlyName || item.memberId} ({item.targetDailyCalories} kcal)
                   </label>
                 </li>
               ))}
@@ -686,43 +825,80 @@ export default function HomePage() {
                 {cuisineOptions.map((option) => <option key={option} value={option}>{option}</option>)}
               </select>
             </label>
-            <label>
-              Exclude ingredients (multi-select)
-              <select
-                multiple
-                size={6}
-                style={{ width: '100%' }}
-                value={preferences.excludedIngredients}
-                onChange={(event) => {
-                  const values = Array.from(event.target.selectedOptions).map((option) => option.value);
-                  setPreferences({ ...preferences, excludedIngredients: values });
-                }}
-              >
-                {ingredientOptions.map((ingredient) => <option key={ingredient} value={ingredient}>{ingredient}</option>)}
-              </select>
-            </label>
-            <div style={{ fontSize: '0.9rem', color: '#5b6075' }}>
-              Load meal bank first to populate ingredient options.
+            <div style={{ border: '1px solid #d8ddf5', borderRadius: '8px', padding: '0.5rem', background: 'white' }}>
+              <strong>Ingredients by type</strong>
+              {Object.keys(ingredientTypeMap).length === 0 && <div style={{ color: '#5b6075', marginTop: '0.4rem' }}>Load meal bank first to populate ingredient groups.</div>}
+              {Object.keys(ingredientTypeMap).length > 0 && (
+                <>
+                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.45rem' }}>
+                    {Object.keys(ingredientTypeMap).map((type) => {
+                      const selected = activeIngredientType === type;
+                      return (
+                        <button
+                          key={`ingredient-tab-${type}`}
+                          type="button"
+                          onClick={() => setActiveIngredientType(type)}
+                          style={{
+                            borderRadius: '999px',
+                            border: selected ? '1px solid #4c63d2' : '1px solid #d2d7ef',
+                            background: selected ? '#4c63d2' : '#eef1ff',
+                            color: selected ? 'white' : '#233',
+                            padding: '0.25rem 0.65rem',
+                            cursor: 'pointer',
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {labelCase(type)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {activeIngredientType && (
+                    <label style={{ display: 'block', marginTop: '0.45rem' }}>
+                      {labelCase(activeIngredientType)}
+                      <select
+                        multiple
+                        size={6}
+                        style={{ width: '100%' }}
+                        value={selectedIngredientsByType[activeIngredientType] || []}
+                        onChange={(event) => {
+                          const values = Array.from(event.target.selectedOptions).map((option) => option.value);
+                          setSelectedIngredientsByType({ ...selectedIngredientsByType, [activeIngredientType]: values });
+                        }}
+                      >
+                        {(ingredientTypeMap[activeIngredientType] || []).map((ingredient) => (
+                          <option key={`${activeIngredientType}-${ingredient}`} value={ingredient}>{ingredient}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                </>
+              )}
+              <button type="button" style={{ marginTop: '0.45rem' }} onClick={addExcludedIngredients}>Add</button>
+            </div>
+            <div>
+              <label>
+                Excluded Ingredients
+                <select
+                  multiple
+                  size={10}
+                  style={{ width: '100%' }}
+                  value={selectedExcludedIngredients}
+                  onChange={(event) => setSelectedExcludedIngredients(Array.from(event.target.selectedOptions).map((option) => option.value))}
+                >
+                  {preferences.excludedIngredients.map((ingredient) => <option key={`excluded-${ingredient}`} value={ingredient}>{ingredient}</option>)}
+                </select>
+              </label>
+              <button type="button" onClick={removeExcludedIngredients}>Remove</button>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.6rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.6rem', flexWrap: 'wrap' }}>
             <button type="button" onClick={() => generatePlan()}>Generate plan</button>
             <button type="button" onClick={regeneratePlan}>Regenerate plan</button>
             <button type="button" onClick={loadMealBank}>Load meal bank</button>
+            <button type="button" onClick={undoLastSwap} disabled={!undoSwapState}>Undo last swap</button>
           </div>
           <p aria-live="polite">{plannerMessage}</p>
-          <ul style={{ marginTop: 0 }}>
-            {calibratedProfileScales.map((item) => {
-              if (!item.averageCalories) return <li key={`avg-${item.memberId}`}>{item.memberId}: generate a plan to evaluate target alignment.</li>;
-              const delta = item.averageCalories - item.targetDailyCalories;
-              const within = Math.abs(delta) <= 50;
-              return (
-                <li key={`avg-${item.memberId}`}>
-                  {item.memberId}: weekly average {item.averageCalories} kcal/day vs target {item.targetDailyCalories} kcal/day ({delta >= 0 ? '+' : ''}{delta}) {within ? '✓ within ±50' : '⚠ adjust preferences and regenerate'}
-                </li>
-              );
-            })}
-          </ul>
 
           <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.6rem', flexWrap: 'wrap' }}>
             {calibratedProfileScales.map((item) => {
@@ -759,27 +935,34 @@ export default function HomePage() {
                       key={`${day.day}-${mealIndex}`}
                       onDragOver={(event) => event.preventDefault()}
                       onDrop={() => onDrop(dayIndex, mealIndex)}
-                      style={{ border: '1px solid #d8ddf5', height: '132px', marginBottom: '0.4rem', borderRadius: '6px', padding: '0.35rem', background: '#f6f8ff', overflow: 'auto' }}
+                      onClick={() => openSwapDialog(dayIndex, mealIndex, meal)}
+                      style={{ border: '1px solid #d8ddf5', height: '152px', marginBottom: '0.4rem', borderRadius: '6px', padding: '0.35rem', background: '#f6f8ff', overflow: 'auto', cursor: meal ? 'pointer' : 'default' }}
                     >
-                        {meal ? (
-                          <div draggable onDragStart={() => onDragStart({ kind: 'slot', dayIndex, mealIndex })} style={{ cursor: 'move' }}>
-                            <div style={{ fontWeight: 600 }}>{meal.recipeName}</div>
-                            {(() => {
-                              const macros = scaleMacros(meal.macros, activeScale.scale);
-                              return (
-                                <small style={{ display: 'block' }}>
-                                  {activeScale.memberId}: {estimateCalories(macros)} cal • P {macros.proteinG}g • F {macros.fatG}g • C {macros.carbG}g
-                                </small>
-                              );
-                            })()}
-                          </div>
-                        ) : <small style={{ color: '#7b8199' }}>Drop meal here</small>}
-                      </div>
-                    ))}
+                      {meal ? (
+                        <div draggable onDragStart={() => onDragStart({ kind: 'slot', dayIndex, mealIndex })} style={{ cursor: 'move' }}>
+                          <div style={{ fontWeight: 600 }}>{meal.recipeName}</div>
+                          {(() => {
+                            const macros = scaleMacros(meal.macros, activeScale.scale);
+                            return (
+                              <small style={{ display: 'block' }}>
+                                <div>Calories: {estimateCalories(macros)} cal</div>
+                                <div>Protein: {macros.proteinG}g</div>
+                                <div>Fat: {macros.fatG}g</div>
+                                <div>Carbs: {macros.carbG}g</div>
+                              </small>
+                            );
+                          })()}
+                        </div>
+                      ) : <small style={{ color: '#7b8199' }}>Drop meal here</small>}
+                    </div>
+                  ))}
                   <div style={{ marginTop: 'auto', borderTop: '1px solid #d8ddf5', paddingTop: '0.35rem' }}>
                     <small><strong>Daily total</strong></small>
                     <small style={{ display: 'block' }}>
-                      {activeScale.memberId}: {totals.calories} cal • P {totals.protein}g • F {totals.fat}g • C {totals.carbs}g
+                      <div>Calories: {totals.calories} cal</div>
+                      <div>Protein: {totals.protein}g</div>
+                      <div>Fat: {totals.fat}g</div>
+                      <div>Carbs: {totals.carbs}g</div>
                     </small>
                   </div>
                 </div>
@@ -801,6 +984,24 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+
+          {swapDialog.open && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(16,20,36,0.55)', display: 'grid', placeItems: 'center', zIndex: 20 }}>
+              <div style={{ width: 'min(540px, 95vw)', maxHeight: '85vh', overflow: 'auto', background: 'white', borderRadius: '10px', padding: '1rem' }}>
+                <h3 style={{ marginTop: 0 }}>Swap {swapDialog.meal?.slot}</h3>
+                <p>Choose a {swapDialog.meal?.slot} replacement for <strong>{swapDialog.meal?.recipeName}</strong>.</p>
+                <select style={{ width: '100%' }} value={swapDialog.selectedRecipeId} onChange={(event) => setSwapDialog({ ...swapDialog, selectedRecipeId: event.target.value })}>
+                  <option value="">Select a meal</option>
+                  {selectableSwapRecipes.map((recipe) => <option key={`swap-${recipe.id}`} value={recipe.id}>{recipe.name}</option>)}
+                </select>
+                <div style={{ display: 'flex', gap: '0.45rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+                  <button type="button" onClick={() => applyMealSwap('single')} disabled={!swapDialog.selectedRecipeId}>Replace this day only</button>
+                  <button type="button" onClick={() => applyMealSwap('all')} disabled={!swapDialog.selectedRecipeId}>Replace all occurrences</button>
+                  <button type="button" onClick={() => setSwapDialog({ open: false, dayIndex: -1, mealIndex: -1, meal: null, selectedRecipeId: '' })}>Cancel</button>
+                </div>
+              </div>
+            </div>
+          )}
         </section>
       )}
 
