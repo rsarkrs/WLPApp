@@ -179,6 +179,7 @@ export default function HomePage() {
     excludedIngredients: [],
   });
   const [selectedIngredientsByType, setSelectedIngredientsByType] = useState({});
+  const [activeIngredientType, setActiveIngredientType] = useState('');
   const [selectedExcludedIngredients, setSelectedExcludedIngredients] = useState([]);
   const [selectedPlannerMemberId, setSelectedPlannerMemberId] = useState('');
   const [swapDialog, setSwapDialog] = useState({ open: false, dayIndex: -1, mealIndex: -1, meal: null, selectedRecipeId: '' });
@@ -633,6 +634,17 @@ export default function HomePage() {
     return mealBank.filter((item) => item.mealType === swapDialog.meal.slot);
   }, [mealBank, swapDialog]);
 
+  useEffect(() => {
+    const types = Object.keys(ingredientTypeMap);
+    if (types.length === 0) {
+      setActiveIngredientType('');
+      return;
+    }
+    if (!types.includes(activeIngredientType)) {
+      setActiveIngredientType(types[0]);
+    }
+  }, [ingredientTypeMap, activeIngredientType]);
+
   function addExcludedIngredients() {
     const selected = Object.values(selectedIngredientsByType).flat();
     if (selected.length === 0) return;
@@ -816,23 +828,52 @@ export default function HomePage() {
             <div style={{ border: '1px solid #d8ddf5', borderRadius: '8px', padding: '0.5rem', background: 'white' }}>
               <strong>Ingredients by type</strong>
               {Object.keys(ingredientTypeMap).length === 0 && <div style={{ color: '#5b6075', marginTop: '0.4rem' }}>Load meal bank first to populate ingredient groups.</div>}
-              {Object.entries(ingredientTypeMap).map(([type, ingredients]) => (
-                <label key={type} style={{ display: 'block', marginTop: '0.45rem' }}>
-                  {labelCase(type)}
-                  <select
-                    multiple
-                    size={4}
-                    style={{ width: '100%' }}
-                    value={selectedIngredientsByType[type] || []}
-                    onChange={(event) => {
-                      const values = Array.from(event.target.selectedOptions).map((option) => option.value);
-                      setSelectedIngredientsByType({ ...selectedIngredientsByType, [type]: values });
-                    }}
-                  >
-                    {ingredients.map((ingredient) => <option key={`${type}-${ingredient}`} value={ingredient}>{ingredient}</option>)}
-                  </select>
-                </label>
-              ))}
+              {Object.keys(ingredientTypeMap).length > 0 && (
+                <>
+                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.45rem' }}>
+                    {Object.keys(ingredientTypeMap).map((type) => {
+                      const selected = activeIngredientType === type;
+                      return (
+                        <button
+                          key={`ingredient-tab-${type}`}
+                          type="button"
+                          onClick={() => setActiveIngredientType(type)}
+                          style={{
+                            borderRadius: '999px',
+                            border: selected ? '1px solid #4c63d2' : '1px solid #d2d7ef',
+                            background: selected ? '#4c63d2' : '#eef1ff',
+                            color: selected ? 'white' : '#233',
+                            padding: '0.25rem 0.65rem',
+                            cursor: 'pointer',
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {labelCase(type)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {activeIngredientType && (
+                    <label style={{ display: 'block', marginTop: '0.45rem' }}>
+                      {labelCase(activeIngredientType)}
+                      <select
+                        multiple
+                        size={6}
+                        style={{ width: '100%' }}
+                        value={selectedIngredientsByType[activeIngredientType] || []}
+                        onChange={(event) => {
+                          const values = Array.from(event.target.selectedOptions).map((option) => option.value);
+                          setSelectedIngredientsByType({ ...selectedIngredientsByType, [activeIngredientType]: values });
+                        }}
+                      >
+                        {(ingredientTypeMap[activeIngredientType] || []).map((ingredient) => (
+                          <option key={`${activeIngredientType}-${ingredient}`} value={ingredient}>{ingredient}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                </>
+              )}
               <button type="button" style={{ marginTop: '0.45rem' }} onClick={addExcludedIngredients}>Add</button>
             </div>
             <div>
