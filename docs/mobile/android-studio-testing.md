@@ -39,7 +39,7 @@ Inside Android emulator browser, use host alias:
   - Save one member and optional second member.
   - Toggle imperial/metric and recalculate calories.
 - Weekly Planner:
-  - Generate plan, regenerate, and drag/swap meals.
+  - Generate plan, regenerate, and click meal cards to swap meals.
   - Use cuisine and ingredient exclusion filters.
 - Recipes Used:
   - Select a recipe and verify ingredients/instructions render.

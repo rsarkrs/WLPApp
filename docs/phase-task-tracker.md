@@ -70,7 +70,7 @@ Use this checklist as the execution ledger for roadmap phases in `README.md`.
 - [x] Build shopping list grouped view and export action.
 - [x] Add saved-profile loading for multi-member households (MVP two-person planning).
 - [x] Add unit toggle support (imperial/metric) and target calorie auto-calculation from requested weekly loss.
-- [x] Add meal bank + drag/drop planner swapping with consistent day-card formatting.
+- [x] Add planner meal replacement flow with click-to-swap cards and consistent day-card formatting.
 - [x] Add tabbed UI sections and readability-focused shopping table layout.
 - [x] Add two-member profile cards with weight-first input ordering and unit-aware weekly-loss labels.
 - [x] Add planner preference filters for cuisines plus include/exclude ingredients and wire through API preview generation.
