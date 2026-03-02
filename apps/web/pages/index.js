@@ -183,6 +183,7 @@ export default function HomePage() {
   const [selectedPlannerMemberId, setSelectedPlannerMemberId] = useState('');
   const [swapDialog, setSwapDialog] = useState({ open: false, dayIndex: -1, mealIndex: -1, meal: null, selectedRecipeId: '' });
   const [undoSwapState, setUndoSwapState] = useState(null);
+  const [isMobileNav, setIsMobileNav] = useState(true);
 
   const apiBase = useMemo(() => '/api', []);
   const editableProfiles = profiles;
@@ -235,13 +236,22 @@ export default function HomePage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(max-width: 768px)');
+    const apply = () => setIsMobileNav(media.matches);
+    apply();
+    media.addEventListener('change', apply);
+    return () => media.removeEventListener('change', apply);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
     try {
       const parsed = JSON.parse(window.localStorage.getItem(localStateKey) || 'null');
       if (!parsed) return;
 
       if (Array.isArray(parsed.profiles) && parsed.profiles.length > 0) setProfiles(parsed.profiles.slice(0, maxMembers).map((item, index) => ({ ...item, friendlyName: item.friendlyName || `Member ${index + 1}` })));
-      if (Array.isArray(parsed.savedProfiles)) setSavedProfiles(parsed.savedProfiles);
-      if (Array.isArray(parsed.selectedMembers)) setSelectedMembers(parsed.selectedMembers);
+      if (Array.isArray(parsed.savedProfiles)) setSavedProfiles(parsed.savedProfiles.slice(0, maxMembers));
+      if (Array.isArray(parsed.selectedMembers)) setSelectedMembers(parsed.selectedMembers.slice(0, maxMembers));
       if (Array.isArray(parsed.weekPlan)) setWeekPlan(parsed.weekPlan);
       if (Array.isArray(parsed.mealBank)) setMealBank(parsed.mealBank);
       if (parsed.preferences) setPreferences(parsed.preferences);
@@ -676,7 +686,7 @@ export default function HomePage() {
   };
 
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', margin: '1rem auto', maxWidth: '1400px', color: '#1f2438', paddingBottom: '5rem' }}>
+    <main style={{ fontFamily: 'system-ui, sans-serif', margin: '1rem auto', maxWidth: '1400px', color: '#1f2438', paddingBottom: isMobileNav ? '5rem' : '1rem' }}>
       <h1>WLPApp Web Scaffold</h1>
       <p><strong>Internal Launch UI Beta:</strong> Phase 10 MVP flows are active and later phases harden release-readiness automation.</p>
       <p>API target: <code>/api</code> (used for calculations/meal generation only; profile data is local-storage only)</p>
@@ -699,7 +709,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 15, display: 'flex', justifyContent: 'space-around', gap: '0.25rem', padding: '0.5rem', marginBottom: 0, flexWrap: 'nowrap', background: '#ffffff', borderTop: '1px solid #dce2f7' }}>
+      <div style={isMobileNav
+        ? { position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 15, display: 'flex', justifyContent: 'space-around', gap: '0.25rem', padding: '0.5rem', marginBottom: 0, flexWrap: 'nowrap', background: '#ffffff', borderTop: '1px solid #dce2f7' }
+        : { display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
         {tabButton('profile', 'Profile and Goals')}
         {tabButton('planner', 'Weekly Planner')}
         {tabButton('recipes', 'Recipes Used')}
