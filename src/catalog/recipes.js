@@ -156,48 +156,70 @@ const seedRecipes = [
 
 const instructionByRecipeId = {
   'r-oats-bowl': [
-    'Cook oats in milk until creamy.',
-    'Stir in chia seeds and top with berries before serving.'
+    'Bring milk to a gentle simmer in a saucepan over medium heat and stir in the oats.',
+    'Cook for 5 to 7 minutes, stirring often, until the oats are thick and tender.',
+    'Turn off the heat, fold in chia seeds, and let the mixture rest for 1 minute to hydrate.',
+    'Transfer to a bowl, top with berries, and serve warm.'
   ],
   'r-egg-wrap': [
-    'Scramble eggs in a pan and warm the tortilla.',
-    'Fill with eggs, spinach, and cheese, then fold and serve.'
+    'Heat a non-stick skillet over medium heat and whisk eggs with a pinch of salt in a bowl.',
+    'Scramble eggs in the skillet for 2 to 3 minutes until softly set, then remove from heat.',
+    'Warm the tortilla in the same pan for 20 to 30 seconds per side and layer spinach, eggs, and cheese in the center.',
+    'Fold the tortilla into a wrap, return to the pan for 1 minute to melt the cheese, then slice and serve.'
   ],
   'r-greek-chicken': [
-    'Season and sear chicken until cooked through.',
-    'Serve with rice, cucumber, and tomato, then drizzle olive oil.'
+    'Season chicken breast with salt and pepper, then sear in a hot skillet with olive oil for 5 to 6 minutes per side until fully cooked.',
+    'Cook rice according to package directions while the chicken rests for 3 minutes.',
+    'Dice cucumber and tomato and toss with a small pinch of salt.',
+    'Slice chicken and plate with rice and vegetables, then finish with a drizzle of olive oil.'
   ],
   'r-turkey-sandwich': [
-    'Layer turkey, avocado, lettuce, and tomato on bread.',
-    'Slice and serve immediately.'
+    'Toast whole grain bread slices until lightly crisp.',
+    'Mash avocado with a pinch of salt and spread it on one slice of bread.',
+    'Layer turkey breast, lettuce, and tomato evenly over the avocado.',
+    'Close the sandwich with the second slice, press gently, cut in half, and serve.'
   ],
   'r-beef-rice-bowl': [
-    'Brown beef in a skillet and cook rice separately.',
-    'Serve with carrot and broccoli, then finish with soy sauce.'
+    'Cook rice in a saucepan according to package directions and keep covered when done.',
+    'Heat a skillet over medium-high heat, add lean beef, and cook until browned and fully cooked through.',
+    'Add carrot and broccoli to the skillet with a splash of water, cover for 2 minutes, then uncover and stir-fry until just tender.',
+    'Add soy sauce, stir to coat, and serve over rice.'
   ],
   'r-tofu-stirfry': [
-    'Stir-fry tofu until lightly crisp.',
-    'Add vegetables, ginger, and soy sauce, then serve over rice.'
+    'Press tofu with paper towels, cut into cubes, and sear in a hot skillet until golden on multiple sides.',
+    'Add broccoli and cook for 3 to 4 minutes, stirring frequently.',
+    'Stir in ginger and soy sauce and cook for 1 minute until fragrant.',
+    'Serve the stir-fry over cooked rice.'
   ],
   'r-salmon-potatoes': [
-    'Roast salmon and potatoes until tender.',
-    'Serve with asparagus and lemon with olive oil drizzle.'
+    'Preheat oven to 425°F (220°C) and spread cubed potatoes on a sheet pan with half the olive oil, salt, and pepper.',
+    'Roast potatoes for 20 minutes, then add salmon and asparagus to the pan with remaining olive oil.',
+    'Return pan to the oven for 12 to 15 minutes until salmon flakes easily and asparagus is tender.',
+    'Plate with lemon on top and serve immediately.'
   ],
   'r-chicken-pasta': [
-    'Cook pasta and sauté chicken until done.',
-    'Toss with vegetables and olive oil, then serve warm.'
+    'Boil pasta in salted water until al dente, then drain and reserve a small splash of pasta water.',
+    'Season chicken and sauté in olive oil over medium-high heat until cooked through, then slice.',
+    'In the same pan, sauté zucchini and bell pepper for 3 to 4 minutes until slightly tender.',
+    'Combine pasta, chicken, vegetables, and a splash of pasta water, toss for 1 minute, and serve warm.'
   ],
   'r-korean-bulgogi-bowl': [
-    'Sear beef with sesame oil in a hot pan.',
-    'Serve over rice with kimchi and sliced scallion.'
+    'Cook rice according to package directions and keep warm.',
+    'Heat a skillet over high heat with sesame oil and sear beef sirloin in a single layer until browned.',
+    'Stir in sliced scallion and cook for 30 seconds to soften slightly.',
+    'Serve beef and scallion over rice with kimchi on the side.'
   ],
   'r-chinese-ginger-chicken': [
-    'Cook chicken with ginger and garlic until browned.',
-    'Serve with rice and bok choy.'
+    'Cook rice according to package directions and set aside covered.',
+    'Sauté chicken thigh in a hot skillet until browned and cooked through.',
+    'Add ginger and garlic, stir for 30 to 60 seconds until aromatic, then fold in chopped bok choy.',
+    'Cook until bok choy is tender-crisp and serve over rice.'
   ],
   'r-italian-turkey-meatballs': [
-    'Form turkey meatballs and bake or pan-sear until cooked.',
-    'Simmer in tomato sauce and serve over pasta with basil.'
+    'Preheat oven to 425°F (220°C), season ground turkey, and form into evenly sized meatballs.',
+    'Bake meatballs for 12 to 15 minutes until cooked through and lightly browned.',
+    'Warm tomato sauce in a skillet, add baked meatballs, and simmer for 3 to 4 minutes.',
+    'Serve over cooked whole wheat pasta and garnish with chopped basil.'
   ],
 };
 

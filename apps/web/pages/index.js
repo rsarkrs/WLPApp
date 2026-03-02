@@ -167,9 +167,8 @@ export default function HomePage() {
   const [savedProfiles, setSavedProfiles] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [seed, setSeed] = useState(0);
-  const [plannerMessage, setPlannerMessage] = useState('Generate a weekly planner and drag/drop cards to reorganize.');
+  const [plannerMessage, setPlannerMessage] = useState('Choose cuisines and load the meal bank to start planning.');
   const [weekPlan, setWeekPlan] = useState(emptyWeek());
-  const [dragSource, setDragSource] = useState(null);
   const [mealBank, setMealBank] = useState([]);
   const [shoppingMessage, setShoppingMessage] = useState('Generate categorized totals for unique shopping items.');
   const [shoppingRows, setShoppingRows] = useState([]);
@@ -432,7 +431,7 @@ export default function HomePage() {
       setPlannerMessage(
         plannedRecipeIds.length === 0
           ? 'No recipes matched your current preferences. Clear filters and regenerate.'
-          : 'Planner generated with preferences. Drag cards or meal-bank items to reorganize.'
+          : 'Planner generated. Click any meal card to swap it with another option.'
       );
     } catch (error) {
       setPlannerMessage(error?.message === 'Failed to fetch' ? 'Unable to reach API planner endpoint. Start `npm run start:api` and retry.' : error.message);
@@ -443,46 +442,6 @@ export default function HomePage() {
     const nextSeed = seed + 1;
     setSeed(nextSeed);
     await generatePlan(nextSeed);
-  }
-
-  function onDragStart(source) {
-    setDragSource(source);
-  }
-
-  function onDrop(dayIndex, mealIndex) {
-    if (!dragSource) return;
-
-    if (dragSource.kind === 'slot') {
-      setWeekPlan((current) => {
-        const clone = current.map((day) => ({ ...day, meals: [...day.meals] }));
-        const from = clone[dragSource.dayIndex].meals[dragSource.mealIndex];
-        const to = clone[dayIndex].meals[mealIndex];
-        clone[dragSource.dayIndex].meals[dragSource.mealIndex] = to;
-        clone[dayIndex].meals[mealIndex] = from;
-        return clone;
-      });
-      setPlannerMessage('Swapped meal cards.');
-      setDragSource(null);
-      return;
-    }
-
-    if (dragSource.kind === 'bank') {
-      setWeekPlan((current) => {
-        const clone = current.map((day) => ({ ...day, meals: [...day.meals] }));
-        const slot = mealSlots[mealIndex];
-        clone[dayIndex].meals[mealIndex] = {
-          day: dayIndex + 1,
-          slot,
-          recipeId: dragSource.recipe.id,
-          recipeName: dragSource.recipe.name,
-          macros: dragSource.recipe.macros,
-          selectionReason: 'meal_bank_drag_drop',
-        };
-        return clone;
-      });
-      setPlannerMessage('Dropped meal from meal bank into planner.');
-      setDragSource(null);
-    }
   }
 
   function openSwapDialog(dayIndex, mealIndex, meal) {
@@ -634,6 +593,9 @@ export default function HomePage() {
     return mealBank.filter((item) => item.mealType === swapDialog.meal.slot);
   }, [mealBank, swapDialog]);
 
+  const hasLoadedMealBank = mealBank.length > 0;
+  const hasGeneratedPlan = weekPlan.some((day) => day.meals.some(Boolean));
+
   useEffect(() => {
     const types = Object.keys(ingredientTypeMap);
     if (types.length === 0) {
@@ -663,10 +625,11 @@ export default function HomePage() {
   }
 
   function normalizeQtyForUnit(qty, unit) {
+    const rounded = Math.round(qty);
     if (unit === 'item') {
-      return Math.max(1, Math.round(qty));
+      return Math.max(1, rounded);
     }
-    return Number(qty.toFixed(2));
+    return rounded;
   }
 
 
@@ -809,8 +772,9 @@ export default function HomePage() {
       {activeTab === 'planner' && (
         <section style={surfaceStyle}>
           <h2>Weekly planner view</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(220px, 1fr))', gap: '0.6rem', marginBottom: '0.7rem' }}>
-            <label>
+
+          <div style={{ border: '1px solid #ccd4f0', borderRadius: '8px', padding: '0.75rem', background: 'white', marginBottom: '0.7rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
               Preferred cuisines (multi-select)
               <select
                 multiple
@@ -825,165 +789,157 @@ export default function HomePage() {
                 {cuisineOptions.map((option) => <option key={option} value={option}>{option}</option>)}
               </select>
             </label>
-            <div style={{ border: '1px solid #d8ddf5', borderRadius: '8px', padding: '0.5rem', background: 'white' }}>
-              <strong>Ingredients by type</strong>
-              {Object.keys(ingredientTypeMap).length === 0 && <div style={{ color: '#5b6075', marginTop: '0.4rem' }}>Load meal bank first to populate ingredient groups.</div>}
-              {Object.keys(ingredientTypeMap).length > 0 && (
-                <>
-                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.45rem' }}>
-                    {Object.keys(ingredientTypeMap).map((type) => {
-                      const selected = activeIngredientType === type;
-                      return (
-                        <button
-                          key={`ingredient-tab-${type}`}
-                          type="button"
-                          onClick={() => setActiveIngredientType(type)}
-                          style={{
-                            borderRadius: '999px',
-                            border: selected ? '1px solid #4c63d2' : '1px solid #d2d7ef',
-                            background: selected ? '#4c63d2' : '#eef1ff',
-                            color: selected ? 'white' : '#233',
-                            padding: '0.25rem 0.65rem',
-                            cursor: 'pointer',
-                            textTransform: 'capitalize',
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button type="button" onClick={loadMealBank}>Load meal bank</button>
+              {hasLoadedMealBank && <button type="button" onClick={() => generatePlan()}>Generate plan</button>}
+              {hasGeneratedPlan && <button type="button" onClick={regeneratePlan}>Regenerate plan</button>}
+              {hasGeneratedPlan && <button type="button" onClick={undoLastSwap} disabled={!undoSwapState}>Undo last swap</button>}
+            </div>
+          </div>
+
+          {hasLoadedMealBank && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(260px, 1fr))', gap: '0.6rem', marginBottom: '0.7rem' }}>
+              <div style={{ border: '1px solid #d8ddf5', borderRadius: '8px', padding: '0.5rem', background: 'white' }}>
+                <strong>Ingredients by type</strong>
+                {Object.keys(ingredientTypeMap).length > 0 && (
+                  <>
+                    <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.45rem' }}>
+                      {Object.keys(ingredientTypeMap).map((type) => {
+                        const selected = activeIngredientType === type;
+                        return (
+                          <button
+                            key={`ingredient-tab-${type}`}
+                            type="button"
+                            onClick={() => setActiveIngredientType(type)}
+                            style={{
+                              borderRadius: '999px',
+                              border: selected ? '1px solid #4c63d2' : '1px solid #d2d7ef',
+                              background: selected ? '#4c63d2' : '#eef1ff',
+                              color: selected ? 'white' : '#233',
+                              padding: '0.25rem 0.65rem',
+                              cursor: 'pointer',
+                              textTransform: 'capitalize',
+                            }}
+                          >
+                            {labelCase(type)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {activeIngredientType && (
+                      <label style={{ display: 'block', marginTop: '0.45rem' }}>
+                        {labelCase(activeIngredientType)}
+                        <select
+                          multiple
+                          size={6}
+                          style={{ width: '100%' }}
+                          value={selectedIngredientsByType[activeIngredientType] || []}
+                          onChange={(event) => {
+                            const values = Array.from(event.target.selectedOptions).map((option) => option.value);
+                            setSelectedIngredientsByType({ ...selectedIngredientsByType, [activeIngredientType]: values });
                           }}
                         >
-                          {labelCase(type)}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {activeIngredientType && (
-                    <label style={{ display: 'block', marginTop: '0.45rem' }}>
-                      {labelCase(activeIngredientType)}
-                      <select
-                        multiple
-                        size={6}
-                        style={{ width: '100%' }}
-                        value={selectedIngredientsByType[activeIngredientType] || []}
-                        onChange={(event) => {
-                          const values = Array.from(event.target.selectedOptions).map((option) => option.value);
-                          setSelectedIngredientsByType({ ...selectedIngredientsByType, [activeIngredientType]: values });
-                        }}
-                      >
-                        {(ingredientTypeMap[activeIngredientType] || []).map((ingredient) => (
-                          <option key={`${activeIngredientType}-${ingredient}`} value={ingredient}>{ingredient}</option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-                </>
-              )}
-              <button type="button" style={{ marginTop: '0.45rem' }} onClick={addExcludedIngredients}>Add</button>
+                          {(ingredientTypeMap[activeIngredientType] || []).map((ingredient) => (
+                            <option key={`${activeIngredientType}-${ingredient}`} value={ingredient}>{ingredient}</option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                  </>
+                )}
+                <button type="button" style={{ marginTop: '0.45rem' }} onClick={addExcludedIngredients}>Add</button>
+              </div>
+              <div>
+                <label>
+                  Excluded Ingredients
+                  <select
+                    multiple
+                    size={10}
+                    style={{ width: '100%' }}
+                    value={selectedExcludedIngredients}
+                    onChange={(event) => setSelectedExcludedIngredients(Array.from(event.target.selectedOptions).map((option) => option.value))}
+                  >
+                    {preferences.excludedIngredients.map((ingredient) => <option key={`excluded-${ingredient}`} value={ingredient}>{ingredient}</option>)}
+                  </select>
+                </label>
+                <button type="button" onClick={removeExcludedIngredients}>Remove</button>
+              </div>
             </div>
-            <div>
-              <label>
-                Excluded Ingredients
-                <select
-                  multiple
-                  size={10}
-                  style={{ width: '100%' }}
-                  value={selectedExcludedIngredients}
-                  onChange={(event) => setSelectedExcludedIngredients(Array.from(event.target.selectedOptions).map((option) => option.value))}
-                >
-                  {preferences.excludedIngredients.map((ingredient) => <option key={`excluded-${ingredient}`} value={ingredient}>{ingredient}</option>)}
-                </select>
-              </label>
-              <button type="button" onClick={removeExcludedIngredients}>Remove</button>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.6rem', flexWrap: 'wrap' }}>
-            <button type="button" onClick={() => generatePlan()}>Generate plan</button>
-            <button type="button" onClick={regeneratePlan}>Regenerate plan</button>
-            <button type="button" onClick={loadMealBank}>Load meal bank</button>
-            <button type="button" onClick={undoLastSwap} disabled={!undoSwapState}>Undo last swap</button>
-          </div>
+          )}
+
           <p aria-live="polite">{plannerMessage}</p>
 
-          <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.6rem', flexWrap: 'wrap' }}>
-            {calibratedProfileScales.map((item) => {
-              const active = item.memberId === selectedPlannerScale().memberId;
-              return (
-                <button
-                  key={item.memberId}
-                  type="button"
-                  onClick={() => setSelectedPlannerMemberId(item.memberId)}
-                  style={{
-                    borderRadius: '999px',
-                    border: active ? '1px solid #4c63d2' : '1px solid #d2d7ef',
-                    background: active ? '#4c63d2' : '#eef1ff',
-                    color: active ? 'white' : '#233',
-                    padding: '0.35rem 0.75rem',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {item.memberId}
-                </button>
-              );
-            })}
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(185px, 1fr))', gap: '0.55rem' }}>
-            {weekPlan.map((day, dayIndex) => {
-              const activeScale = selectedPlannerScale();
-              const totals = dayTotalsForScale(day.meals, activeScale.scale);
-              return (
-                <div key={day.day} style={{ border: '1px solid #cfd7f3', borderRadius: '8px', padding: '0.45rem', background: 'white', display: 'flex', flexDirection: 'column' }}>
-                  <h3 style={{ marginTop: 0, textAlign: 'center' }}>{day.dayName}</h3>
-                  {day.meals.map((meal, mealIndex) => (
-                    <div
-                      key={`${day.day}-${mealIndex}`}
-                      onDragOver={(event) => event.preventDefault()}
-                      onDrop={() => onDrop(dayIndex, mealIndex)}
-                      onClick={() => openSwapDialog(dayIndex, mealIndex, meal)}
-                      style={{ border: '1px solid #d8ddf5', height: '152px', marginBottom: '0.4rem', borderRadius: '6px', padding: '0.35rem', background: '#f6f8ff', overflow: 'auto', cursor: meal ? 'pointer' : 'default' }}
+          {hasGeneratedPlan && (
+            <>
+              <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.6rem', flexWrap: 'wrap' }}>
+                {calibratedProfileScales.map((item) => {
+                  const active = item.memberId === selectedPlannerScale().memberId;
+                  return (
+                    <button
+                      key={item.memberId}
+                      type="button"
+                      onClick={() => setSelectedPlannerMemberId(item.memberId)}
+                      style={{
+                        borderRadius: '999px',
+                        border: active ? '1px solid #4c63d2' : '1px solid #d2d7ef',
+                        background: active ? '#4c63d2' : '#eef1ff',
+                        color: active ? 'white' : '#233',
+                        padding: '0.35rem 0.75rem',
+                        cursor: 'pointer',
+                      }}
                     >
-                      {meal ? (
-                        <div draggable onDragStart={() => onDragStart({ kind: 'slot', dayIndex, mealIndex })} style={{ cursor: 'move' }}>
-                          <div style={{ fontWeight: 600 }}>{meal.recipeName}</div>
-                          {(() => {
-                            const macros = scaleMacros(meal.macros, activeScale.scale);
-                            return (
-                              <small style={{ display: 'block' }}>
-                                <div>Calories: {estimateCalories(macros)} cal</div>
-                                <div>Protein: {macros.proteinG}g</div>
-                                <div>Fat: {macros.fatG}g</div>
-                                <div>Carbs: {macros.carbG}g</div>
-                              </small>
-                            );
-                          })()}
-                        </div>
-                      ) : <small style={{ color: '#7b8199' }}>Drop meal here</small>}
-                    </div>
-                  ))}
-                  <div style={{ marginTop: 'auto', borderTop: '1px solid #d8ddf5', paddingTop: '0.35rem' }}>
-                    <small><strong>Daily total</strong></small>
-                    <small style={{ display: 'block' }}>
-                      <div>Calories: {totals.calories} cal</div>
-                      <div>Protein: {totals.protein}g</div>
-                      <div>Fat: {totals.fat}g</div>
-                      <div>Carbs: {totals.carbs}g</div>
-                    </small>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <h3>Meal bank (drag into planner)</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(240px, 1fr))', gap: '0.55rem' }}>
-            {mealSlots.map((slot) => (
-              <div key={slot} style={{ border: '1px solid #ccd4f0', borderRadius: '8px', padding: '0.5rem', background: 'white' }}>
-                <strong style={{ textTransform: 'capitalize' }}>{slot}</strong>
-                {mealBank.filter((item) => item.mealType === slot).map((recipe) => (
-                  <div key={recipe.id} draggable onDragStart={() => onDragStart({ kind: 'bank', recipe })} style={{ border: '1px solid #d8ddf5', borderRadius: '6px', marginTop: '0.35rem', padding: '0.35rem', cursor: 'grab', background: '#f6f8ff' }}>
-                    <div>{recipe.name}</div>
-                    <small>Protein {recipe.macros.proteinG}g • Fat {recipe.macros.fatG}g • Carbs {recipe.macros.carbG}g</small>
-                  </div>
-                ))}
+                      {item.memberId}
+                    </button>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(185px, 1fr))', gap: '0.55rem' }}>
+                {weekPlan.map((day, dayIndex) => {
+                  const activeScale = selectedPlannerScale();
+                  const totals = dayTotalsForScale(day.meals, activeScale.scale);
+                  return (
+                    <div key={day.day} style={{ border: '1px solid #cfd7f3', borderRadius: '8px', padding: '0.45rem', background: 'white', display: 'flex', flexDirection: 'column' }}>
+                      <h3 style={{ marginTop: 0, textAlign: 'center' }}>{day.dayName}</h3>
+                      {day.meals.map((meal, mealIndex) => (
+                        <div
+                          key={`${day.day}-${mealIndex}`}
+                          onClick={() => openSwapDialog(dayIndex, mealIndex, meal)}
+                          style={{ border: '1px solid #d8ddf5', height: '152px', marginBottom: '0.4rem', borderRadius: '6px', padding: '0.35rem', background: '#f6f8ff', overflow: 'auto', cursor: meal ? 'pointer' : 'default' }}
+                        >
+                          {meal ? (
+                            <div>
+                              <div style={{ fontWeight: 600 }}>{meal.recipeName}</div>
+                              {(() => {
+                                const macros = scaleMacros(meal.macros, activeScale.scale);
+                                return (
+                                  <small style={{ display: 'block' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Calories</span><span>{estimateCalories(macros)} cal</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Protein</span><span>{macros.proteinG}g</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Fat</span><span>{macros.fatG}g</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Carbs</span><span>{macros.carbG}g</span></div>
+                                  </small>
+                                );
+                              })()}
+                            </div>
+                          ) : <small style={{ color: '#7b8199' }}>No meal assigned</small>}
+                        </div>
+                      ))}
+                      <div style={{ marginTop: 'auto', borderTop: '1px solid #d8ddf5', paddingTop: '0.35rem' }}>
+                        <small><strong>Daily total</strong></small>
+                        <small style={{ display: 'block' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Calories</span><span>{totals.calories} cal</span></div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Protein</span><span>{totals.protein}g</span></div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Fat</span><span>{totals.fat}g</span></div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Carbs</span><span>{totals.carbs}g</span></div>
+                        </small>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
           {swapDialog.open && (
             <div style={{ position: 'fixed', inset: 0, background: 'rgba(16,20,36,0.55)', display: 'grid', placeItems: 'center', zIndex: 20 }}>
@@ -1023,7 +979,7 @@ export default function HomePage() {
           {selectedRecipe && (
             <div style={{ marginTop: '0.8rem', border: '1px solid #ccd4f0', borderRadius: '8px', background: 'white', padding: '0.8rem' }}>
               <h3 style={{ marginTop: 0 }}>{selectedRecipe.name}</h3>
-              <p><strong>Base macros:</strong> {estimateCalories(selectedRecipe.macros)} cal • P {selectedRecipe.macros.proteinG}g • F {selectedRecipe.macros.fatG}g • C {selectedRecipe.macros.carbG}g</p>
+              <p><strong>Base macros:</strong> {estimateCalories(selectedRecipe.macros)} cal • Protein {selectedRecipe.macros.proteinG}g • Fat {selectedRecipe.macros.fatG}g • Carbohydrates {selectedRecipe.macros.carbG}g</p>
 
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
@@ -1040,7 +996,7 @@ export default function HomePage() {
                   {selectedRecipe.ingredients.map((ingredient) => (
                     <tr key={`${selectedRecipe.id}-${ingredient.name}`}>
                       <td style={{ borderBottom: '1px solid #eef1ff', padding: '0.35rem' }}>{ingredient.name}</td>
-                      <td style={{ borderBottom: '1px solid #eef1ff', padding: '0.35rem', textAlign: 'right' }}>{ingredient.qty}</td>
+                      <td style={{ borderBottom: '1px solid #eef1ff', padding: '0.35rem', textAlign: 'right' }}>{Math.round(ingredient.qty)}</td>
                       <td style={{ borderBottom: '1px solid #eef1ff', padding: '0.35rem' }}>{ingredient.unit}</td>
                       {calibratedProfileScales.map((profile) => (
                         <td key={`${profile.memberId}-${ingredient.name}`} style={{ borderBottom: '1px solid #eef1ff', padding: '0.35rem', textAlign: 'right' }}>

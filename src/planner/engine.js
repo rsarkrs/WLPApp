@@ -87,13 +87,21 @@ function planWeekByMeals({ recipes, seed = 0, days = 7, cuisine, includeIngredie
     const dayMeals = [];
     for (const [slotIndex, slot] of slots.entries()) {
       const filtered = filterRecipes(recipes, { mealType: slot, cuisine, includeIngredient, excludeIngredient });
-      if (filtered.length === 0) {
-        debug.push({ step: 'filter', details: { slot, cuisine, matchedCount: 0, day: dayIndex + 1 } });
+      const slotPool = filtered.length > 0
+        ? filtered
+        : filterRecipes(recipes, { mealType: slot, includeIngredient, excludeIngredient });
+
+      if (slotPool.length === 0) {
+        debug.push({ step: 'filter', details: { slot, cuisine, matchedCount: 0, day: dayIndex + 1, fallbackToAnyCuisine: false } });
         continue;
       }
 
-      const idx = seededIndex(seed + slotIndex * 31, dayIndex, filtered.length);
-      const recipe = filtered[idx];
+      if (filtered.length === 0) {
+        debug.push({ step: 'filter', details: { slot, cuisine, matchedCount: 0, day: dayIndex + 1, fallbackToAnyCuisine: true } });
+      }
+
+      const idx = seededIndex(seed + slotIndex * 31, dayIndex, slotPool.length);
+      const recipe = slotPool[idx];
       dayMeals.push({
         day: dayIndex + 1,
         slot,
@@ -103,7 +111,7 @@ function planWeekByMeals({ recipes, seed = 0, days = 7, cuisine, includeIngredie
         selectionReason: `seeded_index_${idx}`,
       });
 
-      debug.push({ step: 'filter', details: { slot, cuisine, matchedCount: filtered.length, day: dayIndex + 1 } });
+      debug.push({ step: 'filter', details: { slot, cuisine, matchedCount: slotPool.length, day: dayIndex + 1 } });
     }
 
     daysResult.push({ day: dayIndex + 1, meals: dayMeals });

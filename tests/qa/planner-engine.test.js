@@ -122,6 +122,23 @@ test('planner engine: meal-slot planner returns no-results fallback when all slo
   assert.ok(result.debug.some((entry) => entry.step === 'filter'));
 });
 
+test('planner engine: meal-slot planner falls back by slot cuisine to maintain three meals per day', () => {
+  const result = planWeekByMeals({
+    recipes: seedRecipes,
+    seed: 9,
+    days: 2,
+    cuisine: 'korean',
+    targetMacros: { proteinG: 25, fatG: 10, carbG: 30 },
+  });
+
+  assert.equal(result.days.length, 2);
+  for (const day of result.days) {
+    assert.equal(day.meals.length, 3);
+    assert.deepEqual(day.meals.map((meal) => meal.slot), ['breakfast', 'lunch', 'dinner']);
+  }
+  assert.ok(result.debug.some((entry) => entry.details?.fallbackToAnyCuisine));
+});
+
 test('planner engine: include and exclude ingredient preferences are applied', () => {
   const result = buildPlanningPreview({
     recipes: seedRecipes,
